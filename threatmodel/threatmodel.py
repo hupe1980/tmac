@@ -16,7 +16,8 @@ class Model(Construct):
 
             if c.node.scope is None:
                 raise ValueError(
-                    "No model could be identified for the construct at path")
+                    "No model could be identified for the construct at path"
+                )
 
             return lookup(c.node.scope)
 
@@ -94,6 +95,7 @@ class Risk:
     def __init__(self, element: "Element", threat: "Threat", impact: "Impact", likelihood: "Likelihood", fix_severity: Optional["Severity"] = None) -> None:
         self.id = f"{threat.id}@{element.name}"
         self.target = element.name
+        self.category = threat.category
         self.name = threat.name
         self.description = threat.description
         self.impact = impact
@@ -104,7 +106,14 @@ class Risk:
         else:
             self.severity = fix_severity
 
-        self.mitigation = Mitigation.NONE
+        self._mitigation = Mitigation.NONE
+
+    @property
+    def mitigation(self) -> Mitigation:
+        return self._mitigation
+
+    def mitigate(self, mitigation: Mitigation) -> None:
+        self._mitigation = mitigation
 
     def _calculate_severity(self, impact: "Impact", likelihood: "Likelihood") -> "Severity":
         impact_weights = {Impact.LOW: 1, Impact.MEDIUM: 2,
@@ -169,12 +178,16 @@ class Element(Construct):
     def has_control(self, control: "Controls") -> bool:
         return control in self._controls
 
+    def get_risk_by_id(self, id: str) -> Risk:
+        return [risk for risk in self.risks if risk.id == id][0]
+
     def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
-        headers = ["ID", "Serverity", "Name", "Mitigation"]
+        headers = ["SID", "Serverity", "Category", "Name", "Mitigation"]
         table = []
 
         for risk in self.risks:
-            table.append([risk.id, risk.severity, risk.name, risk.mitigation])
+            table.append([risk.id, risk.severity, risk.category,
+                         risk.name, risk.mitigation])
 
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
@@ -190,12 +203,19 @@ class Result:
     def risks(self) -> List[Risk]:
         return list(self._risks.values())
 
+    def get_risk_by_id(self, id: str) -> Risk:
+        return self._risks[id]
+
+    def mitigate_risk(self, id: str, mitigation: Mitigation) -> None:
+        self._risks[id].mitigate(mitigation)
+
     def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
-        headers = ["ID", "Serverity", "Name", "Affected", "Mitigation"]
+        headers = ["SID", "Serverity", "Category",
+                   "Name", "Affected", "Mitigation"]
         table = []
 
         for risk in self._risks.values():
-            table.append([risk.id, risk.severity, risk.name,
+            table.append([risk.id, risk.severity, risk.category, risk.name,
                          risk.target, risk.mitigation])
 
         return tabulate(table, headers=headers, tablefmt=str(table_format))
@@ -218,9 +238,13 @@ class Data:
 class Controls(Enum):
     """Controls implemented by/on and Element"""
 
-    INPUT_BOUNDS_CHECKS = "input-bounts-checks"
+    INPUT_BOUNDS_CHECKS = "input-bounds-checks"
     INPUT_SANITIZING = "input-sanitizing"
+    SERVER_SIDE_INCLUDES_DEACTIVATION = "server-side-includes-deactivation"
     WAF = "waf"
+
+    def __str__(self) -> str:
+        return str(self.value)
 
 
 class Protocol(Enum):
@@ -272,16 +296,51 @@ class Protocol(Enum):
     IN_PROCESS_LIBRARY_CALL = "in-process-library-call"
     CONTAINER_SPAWNING = "container-spawning"
 
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class Authentication(Enum):
+    NONE = "none",
+    CREDENTIALS = "credentials"
+    SESSION_ID = "session-id"
+    TOKEN = "token"
+    CLIENT_CERTIFICATE = "client-certificate"
+    TWO_FACTOR = "two-factor"
+    EXTERNALIZED = "externalized"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class Authorization(Enum):
+    NONE = "none"
+    TECHNICAL_USER = "technical-user"
+    ENDUSER_IDENTITY_PROPAGATION = "enduser-identity-propagation"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
 
 class DataFlow(Element):
     """A data flow"""
 
-    def __init__(self, scope: Construct, name: str, source: "TechnicalAsset", sink: "TechnicalAsset", protocol: Protocol):
+    def __init__(self, scope: Construct, name: str,
+                 source: "TechnicalAsset",
+                 sink: "TechnicalAsset",
+                 protocol: Protocol,
+                 vpn: bool = False,
+                 authentication: Authentication = Authentication.NONE,
+                 authorization: Authorization = Authorization.NONE,
+                 ):
         super().__init__(scope, name)
 
         self.source = source
         self.sink = sink
         self.protocol = protocol
+        self.vpn = vpn
+        self.authentication = authentication
+        self.authorization = authorization
 
         self._data_sent: Set["Data"] = set()
         self._data_received: Set["Data"] = set()
@@ -295,7 +354,7 @@ class DataFlow(Element):
             self._data_received.add(item)
 
     def is_encrypted(self) -> bool:
-        return self.protocol in [
+        return self.vpn or self.protocol in [
             Protocol.HTTPS,
             Protocol.WSS,
             Protocol.JDBC_ENCRYPTED,
@@ -327,12 +386,18 @@ class TechnicalAssetType(Enum):
     PROCESS = "process"
     DATASTORE = "datastore"
 
+    def __str__(self) -> str:
+        return str(self.value)
+
 
 class Machine(Enum):
     PHYSICAL = "physical"
     VIRTUAL = "virtual"
     CONTAINER = "container"
     SERVERLESS = "serverless"
+
+    def __str__(self) -> str:
+        return str(self.value)
 
 
 class Technology(Enum):
@@ -393,6 +458,9 @@ class Technology(Enum):
     BLOCK_STORAGE = "block-storage"
     LIBRARY = "library"
 
+    def __str__(self) -> str:
+        return str(self.value)
+
 
 class Encryption(Enum):
     NONE = "none"
@@ -401,11 +469,14 @@ class Encryption(Enum):
     ASYMMETRIC_SHARED_KEY = "asymmetric-shared-key"
     ENDUSER_INDIVIDUAL_KEY = "enduser-individual-key"
 
+    def __str__(self) -> str:
+        return str(self.value)
+
 
 class TechnicalAsset(Element, metaclass=ABCMeta):
     def __init__(self, scope: Construct, name: str,
                  type: TechnicalAssetType,
-                 machine: Machine, 
+                 machine: Machine,
                  technology: Technology,
                  environment_variables: bool = False,
                  human_use: bool = False,
@@ -419,7 +490,7 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
 
         self.type = type
         self.machine = machine
-        self.technolgy = technology
+        self.technology = technology
         self.environment_variables = environment_variables
         self.human_use = human_use
         self.internet_facing = internet_facing
@@ -442,7 +513,7 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
                 self._data_assets_processed.add(item)
 
     def is_web_application(self) -> bool:
-        return self.technolgy in [
+        return self.technology in [
             Technology.WEB_SERVER,
             Technology.WEB_APPLICATION,
             Technology.APPLICATION_SERVER,
@@ -453,7 +524,7 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
         ]
 
     def is_web_service(self) -> bool:
-        return self.technolgy in [
+        return self.technology in [
             Technology.WEB_SERVICE_REST,
             Technology.WEB_SERVICE_SOAP,
         ]
@@ -535,6 +606,9 @@ class AttackCategory(Enum):
     https://capec.mitre.org/data/definitions/225.html
     """
 
+    def __str__(self) -> str:
+        return str(self.value)
+
 
 class Threat(ABC):
     """Represents a possible threat"""
@@ -550,7 +624,7 @@ class Threat(ABC):
         self.cwe_ids = cwe_ids
 
     def is_applicable(self, target: "Element") -> bool:
-        if not isinstance(target, self.target):
+        if not isinstance(target, self.target) or target.in_scope is False:
             return False
         return True
 
