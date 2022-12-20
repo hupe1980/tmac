@@ -187,7 +187,7 @@ class Element(Construct):
         return [risk for risk in self.risks if risk.id == id][0]
 
     def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
-        headers = ["SID", "Serverity", "Category", "Name", "Treatment"]
+        headers = ["SID", "Severity", "Category", "Name", "Treatment"]
         table = []
 
         for risk in self.risks:
@@ -225,7 +225,7 @@ class Result:
         self._risks[id].treat(treatment)
 
     def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
-        headers = ["SID", "Serverity", "Category",
+        headers = ["SID", "Severity", "Category",
                    "Name", "Affected", "Treatment"]
         table = []
 
@@ -431,6 +431,12 @@ class DataFlow(Element):
             Protocol.SQL_ACCESS_PROTOCOL_ENCRYPTED,
         ]
 
+    def is_nosql_database_protocol(self) -> bool:
+        return self.protocol in [
+            Protocol.NOSQL_ACCESS_PROTOCOL,
+            Protocol.NOSQL_ACCESS_PROTOCOL_ENCRYPTED,
+        ]
+
     def is_encrypted(self) -> bool:
         return self.vpn or self.protocol in [
             Protocol.HTTPS,
@@ -490,7 +496,7 @@ class Technology(Enum):
     APPLICATION_SERVER = "application-server"
     DATABASE = "database"
     FILE_SERVER = "file-server"
-    LOCAL_FILE_SERVER = "local-file-system"
+    LOCAL_FILE_SYSTEM = "local-file-system"
     ERP = "erp"
     CMS = "cms"
     WEB_SERVICE_REST = "web-service-rest"
@@ -550,6 +556,16 @@ class Encryption(Enum):
     def __str__(self) -> str:
         return str(self.value)
 
+class DataFormat(Enum):
+    JSON = "json"
+    XML = "xml"
+    SERIALIZATION = "serialization"
+    FILE = "file"
+    CSV = "csv"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
 
 class TechnicalAsset(Element, metaclass=ABCMeta):
     def __init__(self, scope: Construct, name: str,
@@ -563,6 +579,7 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
                  multi_tenant: bool = False,
                  redundant: bool = False,
                  custom_developed_parts: bool = False,
+                 accept_data_formats: List[DataFormat] = [],
                  ):
         super().__init__(scope, name)
 
@@ -576,6 +593,7 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
         self.multi_tenant = multi_tenant
         self.redundant = redundant
         self.custom_developed_parts = custom_developed_parts
+        self.accept_data_formats = accept_data_formats
 
         self._data_assets_processed: Set[Data] = set()
         self._data_assets_stored: Set[Data] = set()

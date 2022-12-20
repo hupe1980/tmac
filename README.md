@@ -65,7 +65,7 @@ with open("example.pu","w+") as f:
 print(result.risks_table(table_format=tm.TableFormat.GITHUB))
 ```
 Output:
-| SID              | Serverity   | Category                   | Name             | Affected   | Treatment   |
+| SID              | Severity   | Category                   | Name             | Affected   | Treatment   |
 |------------------|-------------|----------------------------|------------------|------------|-------------|
 | CAPEC-100@WebApi | high        | Manipulate Data Structures | Overflow Buffers | WebApi     | unchecked   |
 | CAPEC-66@WebApi  | elevated    | Inject Unexpected Items    | SQL Injection    | WebApi     | unchecked   |

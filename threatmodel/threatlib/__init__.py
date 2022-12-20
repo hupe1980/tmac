@@ -1,17 +1,18 @@
 from typing import Optional
 
 from ..threatmodel import (
-    AttackCategory, 
-    Element, 
-    Risk, 
-    Threat, 
-    Threatlib, 
-    Likelihood, 
-    Impact, 
-    Controls, 
+    AttackCategory,
+    Element,
+    Risk,
+    Threat,
+    Threatlib,
+    Likelihood,
+    Impact,
+    Controls,
     Process,
     Authentication,
     DataFlow,
+    Technology,
 )
 
 
@@ -47,6 +48,7 @@ class CAPEC_10(Threat):
 
         return None
 
+
 class CAPEC_66(Threat):
     def __init__(self) -> None:
         super().__init__(
@@ -70,7 +72,7 @@ class CAPEC_66(Threat):
     def apply(self, target: "Element") -> Optional["Risk"]:
         if not isinstance(target, DataFlow):
             return None
-        
+
         if not target.is_relational_database_protocol():
             return None
 
@@ -171,16 +173,106 @@ class CAPEC_102(Threat):
     def apply(self, target: "Element") -> Optional["Risk"]:
         if not isinstance(target, DataFlow):
             return None
-        
+
         if not target.is_encrypted() and target.authentication == Authentication.SESSION_ID:
             return Risk(target, self, Impact.HIGH, Likelihood.LIKELY)
 
         return None
 
 
+class CAPEC_126(Threat):
+    def __init__(self) -> None:
+        super().__init__(
+            "CAPEC-126",
+            "Path Traversal",
+            (Process, ),
+            category=AttackCategory.MANIPULATE_DATA_STRUCTURES,
+            description="An adversary uses path manipulation methods to exploit insufficient input validation of a target to obtain access to data that should be not be retrievable by ordinary well-formed requests. A typical variety of this attack involves specifying a path to a desired file together with dot-dot-slash characters, resulting in the file access API or function traversing out of the intended directory structure and into the root file system. By replacing or modifying the expected path information the access function or API retrieves the file desired by the attacker. These attacks either involve the attacker providing a complete path to a targeted file or using control characters (e.g. path separators (/ or \) and/or dots (.)) to reach desired directories or files.",
+            prerequisites=[
+                "The attacker must be able to control the path that is requested of the target.",
+                "The target must fail to adequately sanitize incoming paths.",
+            ],
+            mitigations=[
+                "Design: Configure the access control correctly.",
+                "Design: Enforce principle of least privilege.",
+                "Design: Execute programs with constrained privileges, so parent process does not open up further vulnerabilities. Ensure that all directories, temporary directories and files, and memory are executing with limited privileges to protect against remote execution.",
+                "Design: Input validation. Assume that user inputs are malicious. Utilize strict type, character, and encoding enforcement.",
+                "Design: Proxy communication to host, so that communications are terminated at the proxy, sanitizing the requests before forwarding to server host.",
+                "Design: Run server interfaces with a non-root account and/or utilize chroot jails or other configuration techniques to constrain privileges even if attacker gains some limited access to commands.",
+                "Implementation: Host integrity monitoring for critical files, directories, and processes. The goal of host integrity monitoring is to be aware when a security issue has occurred so that incident response and other forensic activities can begin.",
+                "Implementation: Perform input validation for all remote content, including remote and user-generated content.",
+                "Implementation: Perform testing such as pen-testing and vulnerability scanning to identify directories, programs, and interfaces that grant direct access to executables.",
+                "Implementation: Use indirect references rather than actual file names.",
+                "Implementation: Use possible permissions on file access when developing and deploying web applications.",
+                "Implementation: Validate user input by only accepting known good. Ensure all content that is delivered to client is sanitized against an acceptable content specification -- using an allowlist approach.",
+            ],
+            cwe_ids=[294, 522, 523, 319, 614],
+        )
+
+    def apply(self, target: "Element") -> Optional["Risk"]:
+        if not isinstance(target, Process):
+            return None
+
+        if not target.technology in [Technology.FILE_SERVER, Technology.LOCAL_FILE_SYSTEM]:
+            return None
+
+        if target.has_control(Controls.INPUT_SANITIZING) is False and target.has_control(Controls.INPUT_VALIDATION) is False:
+            return Risk(target, self, Impact.MEDIUM, Likelihood.VERY_LIKELY)
+
+        return None
+
+
+class CAPEC_676(Threat):
+    def __init__(self) -> None:
+        super().__init__(
+            "CAPEC-676",
+            "NoSQL Injection",
+            (DataFlow, ),
+            category=AttackCategory.INJECT_UNEXPECTED_ITEMS,
+            description="An adversary targets software that constructs NoSQL statements based on user input or with parameters vulnerable to operator replacement in order to achieve a variety of technical impacts such as escalating privileges, bypassing authentication, and/or executing code.",
+            prerequisites=[
+                "Awareness of the technology stack being leveraged by the target application.",
+                "NoSQL queries used by the application to store, retrieve, or modify data.",
+                "User-controllable input that is not properly validated by the application as part of NoSQL queries.",
+                "Target potentially susceptible to operator replacement attacks.",
+            ],
+            mitigations=[
+                "Strong input validation - All user-controllable input must be validated and filtered for illegal characters as well as relevant NoSQL and JavaScript content. NoSQL-specific keywords, such as $ne, $eq or $gt for MongoDB, must be filtered in addition to characters such as a single-quote(') or semicolons (;) based on the context in which they appear. Validation should also extend to expected types.",
+                "If possible, leverage safe APIs (e.g., PyMongo and Flask-PyMongo for Python and MongoDB) for queries as opposed to building queries from strings.",
+                "Ensure the most recent version of a NoSQL database and it's corresponding API are used by the application.",
+                "Use of custom error pages - Adversaries can glean information about the nature of queries from descriptive error messages. Input validation must be coupled with customized error pages that inform about an error without disclosing information about the database or application.",
+                "Exercise the principle of Least Privilege with regards to application accounts to minimize damage if a NoSQL injection attack is successful.",
+                "If using MongoDB, disable server-side JavaScript execution and leverage a sanitization module such as 'mongo-sanitize'.",
+                "If using PHP with MongoDB, ensure all special query operators (starting with $) use single quotes to prevent operator replacement attacks.",
+                "Additional mitigations will depend on the NoSQL database, API, and programming language leveraged by the application.",
+            ],
+            cwe_ids=[943, 1286],
+        )
+
+    def apply(self, target: "Element") -> Optional["Risk"]:
+        if not isinstance(target, DataFlow):
+            return None
+
+        if not target.is_nosql_database_protocol():
+            return None
+
+        if target.source.has_control(Controls.INPUT_SANITIZING) is False and target.source.has_control(Controls.INPUT_VALIDATION) is False:
+            return Risk(target.source, self, Impact.HIGH, Likelihood.LIKELY)
+
+        return None
+
+
 DEFAULT_THREATLIB = Threatlib()
 
-DEFAULT_THREATLIB.add_threats(CAPEC_10(), CAPEC_66(), CAPEC_100(), CAPEC_101(), CAPEC_102())
+DEFAULT_THREATLIB.add_threats(
+    CAPEC_10(),
+    CAPEC_66(),
+    CAPEC_100(),
+    CAPEC_101(),
+    CAPEC_102(),
+    CAPEC_126(),
+    CAPEC_676(),
+)
 
 __all__ = (
     "DEFAULT_THREATLIB"
