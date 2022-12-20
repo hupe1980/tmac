@@ -77,13 +77,25 @@ import threatmodel.plus_aws as plus_aws
 alb = plus_aws.ApplicationLoadBalancer(model, "ALB", waf=True)
 
 ```
+
+## Custom threatlib
+```python
+import threatmodel as tm
+
+threatlib = tm.Threatlib()
+
+threatlib.add_threat("""... your custom threats ...""")
+
+model = tm.Model("Demo Model", threatlib=threatlib)
+```
 ## Examples
 
 See more complete [examples](https://github.com/hupe1980/threatmodel/tree/master/examples).
 
-## Other related projects
+## Prior work and other related projects
 - [pytm](https://github.com/izar/pytm) - A Pythonic framework for threat modeling
 - [threagile](https://github.com/Threagile/threagile) - Agile Threat Modeling Toolkit
+- [cdk-threagile](https://github.com/hupe1980/cdk-threagile) - Agile Threat Modeling as Code
 
 ## License
 

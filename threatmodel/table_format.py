@@ -24,5 +24,13 @@ class TableFormat(Enum):
     MOINMOIN = "moinmoin"
     """moinmoin format produces a table markup used in MoinMoin wikis"""
 
+    YOUTRACK = "youtrack"
+    """youtrack format produces a table markup used in Youtrack tickets"""
+
+    HTML = "html"
+    """html produces standard HTML markup as an html.escape'd str with a .repr_html 
+    method so that Jupyter Lab and Notebook display the HTML and a .str property so 
+    that the raw HTML remains accessible."""
+
     def __str__(self) -> str:
         return str(self.value)
