@@ -1,6 +1,7 @@
 from abc import ABC, ABCMeta, abstractmethod
 from typing import Dict, List, Tuple, Any, Optional, Set
 from enum import Enum
+from tabulate import tabulate
 
 from .node import Construct
 
@@ -85,12 +86,18 @@ class Impact(Enum):
     HIGH = "high"
     VERY_HIGH = "very-high"
 
+    def __str__(self) -> str:
+        return str(self.value)
+
 
 class Likelihood(Enum):
     UNLIKELY = "unlikely"
     LIKELY = "likely"
     VERY_LIKELY = "very-likely"
     FREQUENT = "frequent"
+
+    def __str__(self) -> str:
+        return str(self.value)
 
 
 class Severity(Enum):
@@ -99,6 +106,19 @@ class Severity(Enum):
     ELEVATED = "elevated"
     HIGH = "high"
     CRITICAL = "critical"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+class Mitigation(Enum):
+    NONE = "none"
+    REDUCED = "reduced"
+    Transferred = "transferred"
+    AVOIDED = "avoided"
+    ACCEPTED = "accepted"
+
+    def __str__(self) -> str:
+        return str(self.value)
 
 
 class Risk:
@@ -114,6 +134,8 @@ class Risk:
             self.severity = self._calculate_severity(impact, likelihood)
         else:
             self.severity = fix_severity
+
+        self.mitigation = Mitigation.NONE
 
     def _calculate_severity(self, impact: Impact, likelihood: Likelihood) -> "Severity":
         impact_weights = {Impact.LOW: 1, Impact.MEDIUM: 2,
@@ -146,13 +168,52 @@ class Risk:
         return f"'{self.target}': {self.name}\n{self.description}\n{self.severity}"
 
 
+class TableFormat(Enum):
+    SIMPLE = "simple"
+    """simple is the default format. It corresponds to simple_tables in 
+    Pandoc Markdown extensions"""
+    
+    GITHUB = "github"
+    """github follows the conventions of GitHub flavored Markdown"""
+
+    JIRA = "jira"
+    """jira follows the conventions of Atlassian Jira markup language"""
+
+    PRETTY = "pretty"
+    """pretty attempts to be close to the format emitted by the PrettyTables library"""
+
+    RST = "rst"
+    """rst formats data like a simple table of the reStructuredText format"""
+
+    MEDIAWIKI = "mediawiki"
+    """mediawiki format produces a table markup used in Wikipedia and on 
+    other MediaWiki-based sites"""
+    
+    MOINMOIN = "moinmoin"
+    """moinmoin format produces a table markup used in MoinMoin wikis"""
+
+    def __str__(self) -> str:
+        return str(self.value)
+
 class Result:
     def __init__(self) -> None:
-        self.risks: List[Risk] = list()
+        self._risks: Dict[str, Risk] = dict()
 
     def add_risk(self, *risks: Risk) -> None:
         for risk in risks:
-            self.risks.append(risk)
+            self._risks[risk.id] = risk
+
+    def risks(self) -> List[Risk]:
+        return list(self._risks.values())
+
+    def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
+        headers = ["ID", "Serverity", "Name", "Affected", "Mitigation"]
+        table = []
+        
+        for risk in self._risks.values():
+            table.append([risk.id, risk.severity, risk.name, risk.target, risk.mitigation])
+        
+        return tabulate(table, headers=headers, tablefmt=str(table_format))
 
 
 class TrustBoundary(Element):

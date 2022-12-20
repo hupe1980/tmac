@@ -3,38 +3,38 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.abspath(''), '..')))
 
-from threatmodel import Model, Process, Machine, Technology, Data, DataFlow, DataStore, Protocol
+import threatmodel as tm
 
-model = Model("Demo Model")
+model = tm.Model("Demo Model")
 
-pii = Data("PII")
+pii = tm.Data("PII")
 
-server = Process(
+server = tm.Process(
     model,
     "Server",
-    machine=Machine.VIRTUAL,
-    technology=Technology.WEB_SERVER,
+    machine=tm.Machine.VIRTUAL,
+    technology=tm.Technology.WEB_SERVER,
     environment_variables=True,
 )
 
 server.processes(pii)
 
-database = DataStore(
+database = tm.DataStore(
     model,
     "Database",
-    machine=Machine.VIRTUAL,
-    technology=Technology.DATABASE,
+    machine=tm.Machine.VIRTUAL,
+    technology=tm.Technology.DATABASE,
     environment_variables=False,
 )
 
 database.stores(pii)
 
-crud = DataFlow(
+crud = tm.DataFlow(
     model,
     "CRUD",
     server,
     database,
-    protocol=Protocol.SQL_ACCESS_PROTOCOL
+    protocol=tm.Protocol.SQL_ACCESS_PROTOCOL
 )
 
 crud.sends(pii)
@@ -42,4 +42,4 @@ crud.receives(pii)
 
 result = model.evaluate()
 
-print(result.risks)
+print(result.risks_table(table_format=tm.TableFormat.GITHUB))
