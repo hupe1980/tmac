@@ -6,49 +6,51 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.abspath(''), '..')))
 
 import threatmodel as tm
-import threatmodel.plus as plus
-import threatmodel.plus_aws as plus_aws
+import threatmodel.plus as tm_plus
 
+model = tm.Model("REST Login Model")
 
-model = tm.Model("Demo Model")
+user = tm_plus.Browser(model, "User")
 
-pii = tm.Data("PII")
-
-browser = plus.Browser(model, "Browser")
-
-alb = plus_aws.ApplicationLoadBalancer(model, "ALB", waf=True)
-
-server = tm.Process(
+login_process = tm.Process(
     model,
-    "Server",
+    "WebApi",
     machine=tm.Machine.VIRTUAL,
-    technology=tm.Technology.WEB_SERVER,
-    environment_variables=True,
+    technology=tm.Technology.WEB_SERVICE_REST,
 )
 
-server.processes(pii)
+login = tm.DataFlow(
+    model,
+    "Login",
+    user,
+    login_process,
+    protocol=tm.Protocol.HTTPS,
+)
+
+login.sends(tm.Data("LoginRequest"))
+login.receives(tm.Data("LoginResponse"))
 
 database = tm.DataStore(
     model,
     "Database",
     machine=tm.Machine.VIRTUAL,
     technology=tm.Technology.DATABASE,
-    environment_variables=False,
 )
 
-database.stores(pii)
-
-crud = tm.DataFlow(
+authenticate= tm.DataFlow(
     model,
-    "CRUD",
-    server,
-    database,
-    protocol=tm.Protocol.SQL_ACCESS_PROTOCOL
+    "Authenticate",
+    login_process,
+    database ,
+    protocol=tm.Protocol.SQL_ACCESS_PROTOCOL,
 )
 
-crud.sends(pii)
-crud.receives(pii)
+authenticate.sends(tm.Data("AuthenticateUserQuery"))
+authenticate.receives(tm.Data("AuthenticateUserQueryResult"))
 
 result = model.evaluate()
+
+with open("example.pu","w+") as f:
+    f.write(result.sequence_diagram())
 
 print(result.risks_table(table_format=tm.TableFormat.GITHUB))

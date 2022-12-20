@@ -1,6 +1,7 @@
 from abc import ABC, ABCMeta, abstractmethod
 from typing import Dict, List, Tuple, Any, Optional, Set
 from enum import Enum
+import uuid
 from tabulate import tabulate
 
 from .node import Construct
@@ -40,11 +41,12 @@ class Model(Construct):
         return list(filter(lambda c: isinstance(c, TechnicalAsset), self.node.find_all()))
 
     def evaluate(self) -> "Result":
-        result = Result()
+        result = Result(self.title)
 
         for c in self.node.find_all():
             if isinstance(c, Element):
                 result.add_risk(*c.risks)
+                result.add_elements(c)
 
         return result
 
@@ -80,12 +82,14 @@ class Severity(Enum):
         return str(self.value)
 
 
-class Mitigation(Enum):
-    NONE = "none"
+class Treatment(Enum):
+    UNCHECKED = "unchecked"
+    IN_DISCUSSION = "in-discussion"
     REDUCED = "reduced"
-    Transferred = "transferred"
+    TRANSFERRED = "transferred"
     AVOIDED = "avoided"
     ACCEPTED = "accepted"
+    FALSE_POSITIVE = "false-positive"
 
     def __str__(self) -> str:
         return str(self.value)
@@ -106,14 +110,14 @@ class Risk:
         else:
             self.severity = fix_severity
 
-        self._mitigation = Mitigation.NONE
+        self._treatment = Treatment.UNCHECKED
 
     @property
-    def mitigation(self) -> Mitigation:
-        return self._mitigation
+    def treatment(self) -> Treatment:
+        return self._treatment
 
-    def mitigate(self, mitigation: Mitigation) -> None:
-        self._mitigation = mitigation
+    def treat(self, treatment: Treatment) -> None:
+        self._treatment = treatment
 
     def _calculate_severity(self, impact: "Impact", likelihood: "Likelihood") -> "Severity":
         impact_weights = {Impact.LOW: 1, Impact.MEDIUM: 2,
@@ -153,6 +157,7 @@ class Element(Construct):
         super().__init__(model, name)
 
         self.name = name
+        self.uniq_name = self._uniq_name()
         self.in_scope = in_scope
         self.trust_boundary = trust_boundary
 
@@ -182,23 +187,33 @@ class Element(Construct):
         return [risk for risk in self.risks if risk.id == id][0]
 
     def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
-        headers = ["SID", "Serverity", "Category", "Name", "Mitigation"]
+        headers = ["SID", "Serverity", "Category", "Name", "Treatment"]
         table = []
 
         for risk in self.risks:
             table.append([risk.id, risk.severity, risk.category,
-                         risk.name, risk.mitigation])
+                         risk.name, risk.treatment])
 
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
+    def _uniq_name(self) -> str:
+        uid = str(uuid.uuid4())[:8]
+        return f"{self.name}_{uid}"
+
 
 class Result:
-    def __init__(self) -> None:
+    def __init__(self, model_title: str) -> None:
+        self.model_title = model_title
         self._risks: Dict[str, Risk] = dict()
+        self._elements: List[Element] = list()
 
     def add_risk(self, *risks: Risk) -> None:
         for risk in risks:
             self._risks[risk.id] = risk
+
+    def add_elements(self, *elements: Element) -> None:
+        for element in elements:
+            self._elements.append(element)
 
     def risks(self) -> List[Risk]:
         return list(self._risks.values())
@@ -206,23 +221,54 @@ class Result:
     def get_risk_by_id(self, id: str) -> Risk:
         return self._risks[id]
 
-    def mitigate_risk(self, id: str, mitigation: Mitigation) -> None:
-        self._risks[id].mitigate(mitigation)
+    def treat_risk(self, id: str, treatment: Treatment) -> None:
+        self._risks[id].treat(treatment)
 
     def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
         headers = ["SID", "Serverity", "Category",
-                   "Name", "Affected", "Mitigation"]
+                   "Name", "Affected", "Treatment"]
         table = []
 
         for risk in self._risks.values():
             table.append([risk.id, risk.severity, risk.category, risk.name,
-                         risk.target, risk.mitigation])
+                         risk.target, risk.treatment])
 
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
+    def sequence_diagram(self) -> str:
+        participants: List[str] = list()
+        messages: List[str] = list()
+
+        for e in self._elements:
+            if isinstance(e, DataFlow):
+                for data in e.data_sent:
+                    messages.append(f"{e.source.uniq_name} -> {e.sink.uniq_name}: {data.name}")
+                for data in e.data_received:
+                    messages.append(f"{e.sink.uniq_name} -> {e.source.uniq_name}: {data.name}")
+                continue
+
+            if isinstance(e, ExternalEntity):
+                participants.append(f'actor {e.uniq_name} as "{e.name}"')
+                continue
+
+            if isinstance(e, DataStore):
+                participants.append(f'database {e.uniq_name} as "{e.name}"')
+                continue
+
+            if isinstance(e, TechnicalAsset):
+                participants.append(f'entity {e.uniq_name} as "{e.name}"')
+                continue
+
+        template = """@startuml {title}
+{participants}
+{messages}
+@enduml"""
+
+        return template.format(title=self.model_title, participants="\n".join(participants), messages="\n".join(messages))
+
 
 class TrustBoundary(Element):
-    """Trust boundary groups elements and data with the same trust level."""
+    """Trust zone changes as data flows through the system."""
 
     def __init__(self, scope: Construct, name: str) -> None:
         super().__init__(scope, name)
@@ -232,7 +278,7 @@ class Data:
     """Represents a single piece of data that traverses the system"""
 
     def __init__(self, name):
-        pass
+        self.name = name
 
 
 class Controls(Enum):
@@ -323,7 +369,7 @@ class Authorization(Enum):
 
 
 class DataFlow(Element):
-    """A data flow"""
+    """Data movement between processes, data stores, and external entities"""
 
     def __init__(self, scope: Construct, name: str,
                  source: "TechnicalAsset",
@@ -348,10 +394,24 @@ class DataFlow(Element):
     def sends(self, *data: Data) -> None:
         for item in data:
             self._data_sent.add(item)
+            self._update_partipants(item)
 
     def receives(self, *data: Data) -> None:
         for item in data:
             self._data_received.add(item)
+            self._update_partipants(item)
+
+    @property
+    def data_sent(self) -> Set["Data"]:
+        return self._data_sent
+
+    @property
+    def data_received(self) -> Set["Data"]:
+        return self._data_received
+
+    def _update_partipants(self, data: Data) -> None:
+        self.source.processes(data)
+        self.sink.processes(data)
 
     def is_encrypted(self) -> bool:
         return self.vpn or self.protocol in [
@@ -531,21 +591,21 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
 
 
 class ExternalEntity(TechnicalAsset):
-    """A External entity represent any entity outside of the application that sends or receives data, communicating with the system."""
+    """Task, entity, or data store outside of your direct control."""
 
     def __init__(self, scope: Construct, name: str, **kwargs: Any):
         super().__init__(scope, name, TechnicalAssetType.EXTERNAL_ENTITY, **kwargs)
 
 
 class Process(TechnicalAsset):
-    """A Process represents a task that handles data within the application."""
+    """Task that receives, modifies, or redirects input to output."""
 
     def __init__(self, scope: Construct, name: str, **kwargs: Any):
         super().__init__(scope, name, TechnicalAssetType.PROCESS, **kwargs)
 
 
 class DataStore(TechnicalAsset):
-    """A DataStore represents locations where the data are stored."""
+    """Permanent and temporary data storage."""
 
     def __init__(self, scope: Construct, name: str, **kwargs: Any):
         super().__init__(scope, name, TechnicalAssetType.DATASTORE, **kwargs)

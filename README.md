@@ -1,5 +1,5 @@
 # threatmodel
-> Threatmodeling as Code
+> Agile Threat Modeling as Code
 
 ## Install
 ```bash
@@ -15,58 +15,74 @@ python3 threatmodel.py
 #!/usr/bin/env python3
 
 import threatmodel as tm
+import threatmodel.plus as tm_plus
 
-model = tm.Model("Demo Model")
+model = tm.Model("REST Login Model")
 
-pii = tm.Data("PII")
+user = tm_plus.Browser(model, "User")
 
-server = tm.Process(
+login_process = tm.Process(
     model,
-    "Server",
+    "WebApi",
     machine=tm.Machine.VIRTUAL,
-    technology=tm.Technology.WEB_SERVER,
-    environment_variables=True,
+    technology=tm.Technology.WEB_SERVICE_REST,
 )
 
-server.processes(pii)
+login = tm.DataFlow(
+    model,
+    "Login",
+    user,
+    login_process,
+    protocol=tm.Protocol.HTTPS,
+)
+
+login.sends(tm.Data("LoginRequest"))
+login.receives(tm.Data("LoginResponse"))
 
 database = tm.DataStore(
     model,
     "Database",
     machine=tm.Machine.VIRTUAL,
     technology=tm.Technology.DATABASE,
-    environment_variables=False,
 )
 
-database.stores(pii)
-
-crud = tm.DataFlow(
+authenticate= tm.DataFlow(
     model,
-    "CRUD",
-    server,
-    database,
-    protocol=tm.Protocol.SQL_ACCESS_PROTOCOL
+    "Authenticate",
+    login_process,
+    database ,
+    protocol=tm.Protocol.SQL_ACCESS_PROTOCOL,
 )
 
-crud.sends(pii)
-crud.receives(pii)
+authenticate.sends(tm.Data("AuthenticateUserQuery"))
+authenticate.receives(tm.Data("AuthenticateUserQueryResult"))
 
 result = model.evaluate()
+
+with open("example.pu","w+") as f:
+    f.write(result.sequence_diagram())
 
 print(result.risks_table(table_format=tm.TableFormat.GITHUB))
 ```
 Output:
-| ID               | Serverity   | Name                                      | Affected   | Mitigation   |
-|------------------|-------------|-------------------------------------------|------------|--------------|
-| CAPEC-10@Server  | high        | Buffer Overflow via Environment Variables | Server     | none         |
-| CAPEC-100@Server | high        | Overflow Buffers                          | Server     | none         |
-|...|...|...|...|...|
+| SID              | Serverity   | Category                   | Name             | Affected   | Treatment   |
+|------------------|-------------|----------------------------|------------------|------------|-------------|
+| CAPEC-100@WebApi | high        | Manipulate Data Structures | Overflow Buffers | WebApi     | unchecked   |none         |
+|...|...|...|...|...|...|
 
 ## Jupyter Threatbook
 > Threatmodeling with jupyter notebooks
 
 ![threatbook.png](https://github.com/hupe1980/threatmodel/raw/main/.assets/threatbook.png)
 
+## Generating Diagrams
+```python
+result = model.evaluate()
+
+with open("example.pu","w+") as f:
+    f.write(result.sequence_diagram())
+```
+![threatbook.png](https://github.com/hupe1980/threatmodel/raw/main/.assets/sequence-diagram.png)
 
 ## High level elements (threatmodel/plus*)
 ```python
