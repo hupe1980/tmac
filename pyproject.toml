@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "threatmodel"
-version = "0.0.2"
+version = "0.0.3"
 description = "Threatmodeling as Code"
 readme = "README.md"
 authors = [{ name = "hupe1980" }]
@@ -15,7 +15,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 keywords = ["threat modeling"]
-dependencies = []
+dependencies = [
+    "tabulat ~= 0.9.0"
+]
 requires-python = ">=3.9"
 
 

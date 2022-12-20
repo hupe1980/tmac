@@ -12,6 +12,8 @@ python3 threatmodel.py
 ```
 
 ```python
+#!/usr/bin/env python3
+
 # threatmodel.py
 
 import threatmodel as tm
@@ -63,6 +65,9 @@ Output:
 |...|...|...|...|...|
 
 ## Jupyter Threatbook
+> Threatmodeling with jupyter notebooks
+
+![threatbook.png](.assets/threatbook.png)
 
 ## Examples
 
