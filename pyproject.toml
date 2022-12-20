@@ -1,0 +1,22 @@
+[build-system]
+requires      = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "threatmodel"
+version = "0.0.1"
+description = "Threatmodeling as Code"
+readme = "README.md"
+authors = [{ name = "hupe1980" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["threat modeling"]
+dependencies = []
+requires-python = ">=3.9"
+
+[project.urls]
+Homepage = "https://github.com/hupe1980/threatmodel"
