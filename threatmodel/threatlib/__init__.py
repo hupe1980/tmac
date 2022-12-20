@@ -1,6 +1,6 @@
 from typing import Optional
 
-from ..threatmodel import AttackCategory, Element, Risk, Threat, Threatlib, Likelihood, Impact, TechnicalAsset
+from ..threatmodel import AttackCategory, Element, Risk, Threat, Threatlib, Likelihood, Impact, Controls, Process
 
 
 class CAPEC_10(Threat):
@@ -8,7 +8,7 @@ class CAPEC_10(Threat):
         super().__init__(
             "CAPEC-10",
             "Buffer Overflow via Environment Variables",
-            (TechnicalAsset,),
+            (Process,),
             category=AttackCategory.MANIPULATE_DATA_STRUCTURES,
             description="This attack pattern involves causing a buffer overflow through manipulation of environment variables. Once the attacker finds that they can modify an environment variable, they may try to overflow associated buffers. This attack leverages implicit trust often placed in environment variables.",
             prerequisites=[
@@ -27,10 +27,10 @@ class CAPEC_10(Threat):
         )
 
     def apply(self, target: "Element") -> Optional["Risk"]:
-        if not isinstance(target, TechnicalAsset):
+        if not isinstance(target, Process):
             return None
 
-        if target.environment_variables is True and target.controls.sanitizesInput is False and target.controls.checksInputBounds is False:
+        if target.environment_variables is True and target.has_control(Controls.INPUT_SANITIZING) is False and target.has_control(Controls.INPUT_BOUNDS_CHECKS) is False:
             return Risk(target, self, Impact.HIGH, Likelihood.VERY_LIKELY)
 
         return None
@@ -41,7 +41,7 @@ class CAPEC_100(Threat):
         super().__init__(
             "CAPEC-100",
             "Overflow Buffers",
-            (TechnicalAsset,),
+            (Process,),
             category=AttackCategory.MANIPULATE_DATA_STRUCTURES,
             description="Buffer Overflow attacks target improper or missing bounds checking on buffer operations, typically triggered by input injected by an adversary. As a consequence, an adversary is able to write past the boundaries of allocated buffer regions in memory, causing a program crash or potentially redirection of execution as per the adversaries' choice.",
             prerequisites=[
@@ -61,10 +61,10 @@ class CAPEC_100(Threat):
         )
 
     def apply(self, target: "Element") -> Optional["Risk"]:
-        if not isinstance(target, TechnicalAsset):
+        if not isinstance(target, Process):
             return None
 
-        if target.controls.checksInputBounds is False:
+        if not target.has_control(Controls.INPUT_BOUNDS_CHECKS):
             return Risk(target, self, Impact.VERY_HIGH, Likelihood.VERY_LIKELY)
 
         return None

@@ -56,12 +56,27 @@ class Element(Construct):
         self.in_scope = in_scope
         self.trust_boundary = trust_boundary
 
-        self.controls = Controls()
+        self._controls: Set["Controls"] = set()
 
     @property
     def risks(self) -> List["Risk"]:
         threatlib = Model.of(self).threatlib
         return threatlib.apply(self)
+
+    @property
+    def controls(self) -> Set["Controls"]:
+        return self._controls
+
+    def add_controls(self, *controls: "Controls") -> None:
+        for control in controls:
+            self._controls.add(control)
+
+    def remove_controls(self, *controls: "Controls") -> None:
+        for control in controls:
+            self._controls.remove(control)
+
+    def has_control(self, control: "Controls") -> bool:
+        return control in self._controls
 
 
 class Impact(Enum):
@@ -154,11 +169,11 @@ class Data:
         pass
 
 
-class Controls:
+class Controls(Enum):
     """Controls implemented by/on and Element"""
 
-    checksInputBounds = False
-    sanitizesInput = False
+    INPUT_BOUNDS_CHECKS = "input-bounts-checks"
+    INPUT_SANITIZING = "input-sanitizing"
 
 
 class Protocol(Enum):
