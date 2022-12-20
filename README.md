@@ -67,7 +67,8 @@ print(result.risks_table(table_format=tm.TableFormat.GITHUB))
 Output:
 | SID              | Serverity   | Category                   | Name             | Affected   | Treatment   |
 |------------------|-------------|----------------------------|------------------|------------|-------------|
-| CAPEC-100@WebApi | high        | Manipulate Data Structures | Overflow Buffers | WebApi     | unchecked   |none         |
+| CAPEC-100@WebApi | high        | Manipulate Data Structures | Overflow Buffers | WebApi     | unchecked   |
+| CAPEC-66@WebApi  | elevated    | Inject Unexpected Items    | SQL Injection    | WebApi     | unchecked   |
 |...|...|...|...|...|...|
 
 ## Jupyter Threatbook
@@ -86,11 +87,11 @@ with open("example.pu","w+") as f:
 
 ## High level elements (threatmodel/plus*)
 ```python
-import threatmodel.plus_aws as plus_aws
+import threatmodel.plus_aws as tm_plus_aws
 
 # ...
 
-alb = plus_aws.ApplicationLoadBalancer(model, "ALB", waf=True)
+alb = tm_plus_aws.ApplicationLoadBalancer(model, "ALB", waf=True)
 
 ```
 

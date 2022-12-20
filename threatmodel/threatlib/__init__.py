@@ -47,6 +47,38 @@ class CAPEC_10(Threat):
 
         return None
 
+class CAPEC_66(Threat):
+    def __init__(self) -> None:
+        super().__init__(
+            "CAPEC-66",
+            "SQL Injection",
+            (DataFlow, ),
+            category=AttackCategory.INJECT_UNEXPECTED_ITEMS,
+            description="This attack exploits target software that constructs SQL statements based on user input. An attacker crafts input strings so that when the target software constructs SQL statements based on the input, the resulting SQL statement performs actions other than those the application intended. SQL Injection results from failure of the application to appropriately validate input.",
+            prerequisites=[
+                "SQL queries used by the application to store, retrieve or modify data.",
+                "User-controllable input that is not properly validated by the application as part of SQL queries.",
+            ],
+            mitigations=[
+                "Strong input validation - All user-controllable input must be validated and filtered for illegal characters as well as SQL content. Keywords such as UNION, SELECT or INSERT must be filtered in addition to characters such as a single-quote(') or SQL-comments (--) based on the context in which they appear.",
+                "Use of parameterized queries or stored procedures - Parameterization causes the input to be restricted to certain domains, such as strings or integers, and any input outside such domains is considered invalid and the query fails. Note that SQL Injection is possible even in the presence of stored procedures if the eventual query is constructed dynamically.",
+                "Use of custom error pages - Attackers can glean information about the nature of queries from descriptive error messages. Input validation must be coupled with customized error pages that inform about an error without disclosing information about the database or application.",
+            ],
+            cwe_ids=[89, 1286],
+        )
+
+    def apply(self, target: "Element") -> Optional["Risk"]:
+        if not isinstance(target, DataFlow):
+            return None
+        
+        if not target.is_relational_database_protocol():
+            return None
+
+        if target.source.has_control(Controls.INPUT_SANITIZING) is False and target.source.has_control(Controls.INPUT_VALIDATION) is False and target.source.has_control(Controls.Parameterization) is False:
+            return Risk(target.source, self, Impact.HIGH, Likelihood.LIKELY)
+
+        return None
+
 
 class CAPEC_100(Threat):
     def __init__(self) -> None:
@@ -148,7 +180,7 @@ class CAPEC_102(Threat):
 
 DEFAULT_THREATLIB = Threatlib()
 
-DEFAULT_THREATLIB.add_threats(CAPEC_10(), CAPEC_100(), CAPEC_101())
+DEFAULT_THREATLIB.add_threats(CAPEC_10(), CAPEC_66(), CAPEC_100(), CAPEC_101(), CAPEC_102())
 
 __all__ = (
     "DEFAULT_THREATLIB"

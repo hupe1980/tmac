@@ -285,8 +285,16 @@ class Controls(Enum):
     """Controls implemented by/on and Element"""
 
     INPUT_BOUNDS_CHECKS = "input-bounds-checks"
+    
     INPUT_SANITIZING = "input-sanitizing"
+    
+    INPUT_VALIDATION = "input-validation"
+    
+    Parameterization = "parameterization"
+    """Parameterized queries or stored procedures"""
+    
     SERVER_SIDE_INCLUDES_DEACTIVATION = "server-side-includes-deactivation"
+    
     WAF = "waf"
 
     def __str__(self) -> str:
@@ -412,6 +420,16 @@ class DataFlow(Element):
     def _update_partipants(self, data: Data) -> None:
         self.source.processes(data)
         self.sink.processes(data)
+
+    def is_relational_database_protocol(self) -> bool:
+        return self.protocol in [
+            Protocol.JDBC,
+            Protocol.ODBC,
+            Protocol.SQL_ACCESS_PROTOCOL,
+            Protocol.JDBC_ENCRYPTED,
+            Protocol.ODBC_ENCRYPTED,
+            Protocol.SQL_ACCESS_PROTOCOL_ENCRYPTED,
+        ]
 
     def is_encrypted(self) -> bool:
         return self.vpn or self.protocol in [
