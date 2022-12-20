@@ -4,6 +4,7 @@ from enum import Enum
 from tabulate import tabulate
 
 from .node import Construct
+from .table_format import TableFormat
 
 
 class Model(Construct):
@@ -47,6 +48,95 @@ class Model(Construct):
         return result
 
 
+class Impact(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    VERY_HIGH = "very-high"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class Likelihood(Enum):
+    UNLIKELY = "unlikely"
+    LIKELY = "likely"
+    VERY_LIKELY = "very-likely"
+    FREQUENT = "frequent"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class Severity(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    ELEVATED = "elevated"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class Mitigation(Enum):
+    NONE = "none"
+    REDUCED = "reduced"
+    Transferred = "transferred"
+    AVOIDED = "avoided"
+    ACCEPTED = "accepted"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class Risk:
+    def __init__(self, element: "Element", threat: "Threat", impact: "Impact", likelihood: "Likelihood", fix_severity: Optional["Severity"] = None) -> None:
+        self.id = f"{threat.id}@{element.name}"
+        self.target = element.name
+        self.name = threat.name
+        self.description = threat.description
+        self.impact = impact
+        self.likelihood = likelihood
+
+        if fix_severity is None:
+            self.severity = self._calculate_severity(impact, likelihood)
+        else:
+            self.severity = fix_severity
+
+        self.mitigation = Mitigation.NONE
+
+    def _calculate_severity(self, impact: "Impact", likelihood: "Likelihood") -> "Severity":
+        impact_weights = {Impact.LOW: 1, Impact.MEDIUM: 2,
+                          Impact.HIGH: 3, Impact.VERY_HIGH: 4}
+        likelihood_weights = {Likelihood.UNLIKELY: 1, Likelihood.LIKELY: 2,
+                              Likelihood.VERY_LIKELY: 3, Likelihood.FREQUENT: 4}
+
+        result = likelihood_weights[likelihood] * impact_weights[impact]
+
+        if result <= 1:
+            return Severity.LOW
+
+        if result <= 3:
+            return Severity.MEDIUM
+
+        if result <= 8:
+            return Severity.ELEVATED
+
+        if result <= 12:
+            return Severity.HIGH
+
+        return Severity.CRITICAL
+
+    def __repr__(self):
+        return "<{0}.{1}({2}) at {3}>".format(
+            self.__module__, type(self).__name__, self.id, hex(id(self))
+        )
+
+    def __str__(self) -> str:
+        return f"'{self.target}': {self.name}\n{self.description}\n{self.severity}"
+
+
 class Element(Construct):
     """A generic element"""
 
@@ -79,121 +169,15 @@ class Element(Construct):
     def has_control(self, control: "Controls") -> bool:
         return control in self._controls
 
+    def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
+        headers = ["ID", "Serverity", "Name", "Mitigation"]
+        table = []
 
-class Impact(Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    VERY_HIGH = "very-high"
+        for risk in self.risks:
+            table.append([risk.id, risk.severity, risk.name, risk.mitigation])
 
-    def __str__(self) -> str:
-        return str(self.value)
+        return tabulate(table, headers=headers, tablefmt=str(table_format))
 
-
-class Likelihood(Enum):
-    UNLIKELY = "unlikely"
-    LIKELY = "likely"
-    VERY_LIKELY = "very-likely"
-    FREQUENT = "frequent"
-
-    def __str__(self) -> str:
-        return str(self.value)
-
-
-class Severity(Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    ELEVATED = "elevated"
-    HIGH = "high"
-    CRITICAL = "critical"
-
-    def __str__(self) -> str:
-        return str(self.value)
-
-class Mitigation(Enum):
-    NONE = "none"
-    REDUCED = "reduced"
-    Transferred = "transferred"
-    AVOIDED = "avoided"
-    ACCEPTED = "accepted"
-
-    def __str__(self) -> str:
-        return str(self.value)
-
-
-class Risk:
-    def __init__(self, element: Element, threat: "Threat", impact: Impact, likelihood: Likelihood, fix_severity: Optional["Severity"] = None) -> None:
-        self.id = f"{threat.id}@{element.name}"
-        self.target = element.name
-        self.name = threat.name
-        self.description = threat.description
-        self.impact = impact
-        self.likelihood = likelihood
-
-        if fix_severity is None:
-            self.severity = self._calculate_severity(impact, likelihood)
-        else:
-            self.severity = fix_severity
-
-        self.mitigation = Mitigation.NONE
-
-    def _calculate_severity(self, impact: Impact, likelihood: Likelihood) -> "Severity":
-        impact_weights = {Impact.LOW: 1, Impact.MEDIUM: 2,
-                          Impact.HIGH: 3, Impact.VERY_HIGH: 4}
-        likelihood_weights = {Likelihood.UNLIKELY: 1, Likelihood.LIKELY: 2,
-                              Likelihood.VERY_LIKELY: 3, Likelihood.FREQUENT: 4}
-
-        result = likelihood_weights[likelihood] * impact_weights[impact]
-
-        if result <= 1:
-            return Severity.LOW
-
-        if result <= 3:
-            return Severity.MEDIUM
-
-        if result <= 8:
-            return Severity.ELEVATED
-
-        if result <= 12:
-            return Severity.HIGH
-
-        return Severity.CRITICAL
-
-    def __repr__(self):
-        return "<{0}.{1}({2}) at {3}>".format(
-            self.__module__, type(self).__name__, self.id, hex(id(self))
-        )
-
-    def __str__(self) -> str:
-        return f"'{self.target}': {self.name}\n{self.description}\n{self.severity}"
-
-
-class TableFormat(Enum):
-    SIMPLE = "simple"
-    """simple is the default format. It corresponds to simple_tables in 
-    Pandoc Markdown extensions"""
-    
-    GITHUB = "github"
-    """github follows the conventions of GitHub flavored Markdown"""
-
-    JIRA = "jira"
-    """jira follows the conventions of Atlassian Jira markup language"""
-
-    PRETTY = "pretty"
-    """pretty attempts to be close to the format emitted by the PrettyTables library"""
-
-    RST = "rst"
-    """rst formats data like a simple table of the reStructuredText format"""
-
-    MEDIAWIKI = "mediawiki"
-    """mediawiki format produces a table markup used in Wikipedia and on 
-    other MediaWiki-based sites"""
-    
-    MOINMOIN = "moinmoin"
-    """moinmoin format produces a table markup used in MoinMoin wikis"""
-
-    def __str__(self) -> str:
-        return str(self.value)
 
 class Result:
     def __init__(self) -> None:
@@ -209,10 +193,11 @@ class Result:
     def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
         headers = ["ID", "Serverity", "Name", "Affected", "Mitigation"]
         table = []
-        
+
         for risk in self._risks.values():
-            table.append([risk.id, risk.severity, risk.name, risk.target, risk.mitigation])
-        
+            table.append([risk.id, risk.severity, risk.name,
+                         risk.target, risk.mitigation])
+
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
 
@@ -235,6 +220,7 @@ class Controls(Enum):
 
     INPUT_BOUNDS_CHECKS = "input-bounts-checks"
     INPUT_SANITIZING = "input-sanitizing"
+    WAF = "waf"
 
 
 class Protocol(Enum):
@@ -309,7 +295,7 @@ class DataFlow(Element):
             self._data_received.add(item)
 
     def is_encrypted(self) -> bool:
-        if self.protocol in [
+        return self.protocol in [
             Protocol.HTTPS,
             Protocol.WSS,
             Protocol.JDBC_ENCRYPTED,
@@ -330,9 +316,7 @@ class DataFlow(Element):
             Protocol.SMTP_ENCRYPTED,
             Protocol.POP3_ENCRYPTED,
             Protocol.IMAP_ENCRYPTED,
-        ]:
-            return True
-        return False
+        ]
 
     def is_bidirectional(self) -> bool:
         return len(self._data_sent) > 0 and len(self._data_received) > 0
@@ -419,13 +403,30 @@ class Encryption(Enum):
 
 
 class TechnicalAsset(Element, metaclass=ABCMeta):
-    def __init__(self, scope: Construct, name: str, type: TechnicalAssetType, machine: Machine, technology: Technology, environment_variables: bool = False, internet: bool = False, encryption: Encryption = Encryption.NONE):
+    def __init__(self, scope: Construct, name: str,
+                 type: TechnicalAssetType,
+                 machine: Machine, 
+                 technology: Technology,
+                 environment_variables: bool = False,
+                 human_use: bool = False,
+                 internet_facing: bool = False,
+                 encryption: Encryption = Encryption.NONE,
+                 multi_tenant: bool = False,
+                 redundant: bool = False,
+                 custom_developed_parts: bool = False,
+                 ):
         super().__init__(scope, name)
 
+        self.type = type
         self.machine = machine
         self.technolgy = technology
         self.environment_variables = environment_variables
-        self.internet = internet
+        self.human_use = human_use
+        self.internet_facing = internet_facing
+        self.encryption = encryption
+        self.multi_tenant = multi_tenant
+        self.redundant = redundant
+        self.custom_developed_parts = custom_developed_parts
 
         self._data_assets_processed: Set[Data] = set()
         self._data_assets_stored: Set[Data] = set()
@@ -441,7 +442,7 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
                 self._data_assets_processed.add(item)
 
     def is_web_application(self) -> bool:
-        if self.technolgy in [
+        return self.technolgy in [
             Technology.WEB_SERVER,
             Technology.WEB_APPLICATION,
             Technology.APPLICATION_SERVER,
@@ -449,17 +450,13 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
             Technology.CMS,
             Technology.IDENTITIY_PROVIDER,
             Technology.REPORT_ENGINE,
-        ]:
-            return True
-        return False
+        ]
 
     def is_web_service(self) -> bool:
-        if self.technolgy in [
+        return self.technolgy in [
             Technology.WEB_SERVICE_REST,
             Technology.WEB_SERVICE_SOAP,
-        ]:
-            return True
-        return False
+        ]
 
 
 class ExternalEntity(TechnicalAsset):

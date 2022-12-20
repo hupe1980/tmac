@@ -6,10 +6,17 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.abspath(''), '..')))
 
 import threatmodel as tm
+import threatmodel.plus as plus
+import threatmodel.plus_aws as plus_aws
+
 
 model = tm.Model("Demo Model")
 
 pii = tm.Data("PII")
+
+browser = plus.Browser(model, "Browser")
+
+alb = plus_aws.ApplicationLoadBalancer(model, "ALB", waf=True)
 
 server = tm.Process(
     model,

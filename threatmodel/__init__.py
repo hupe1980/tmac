@@ -1,3 +1,4 @@
+from .table_format import TableFormat
 from .threatmodel import (
     AttackCategory, 
     Data, 
@@ -16,12 +17,12 @@ from .threatmodel import (
     ExternalEntity, 
     Process, 
     DataStore,
-    TableFormat, 
     Result, 
     Threat, 
     Threatlib,
 )
 from .threatlib import DEFAULT_THREATLIB
+
 
 __all__ = (
     "AttackCategory",

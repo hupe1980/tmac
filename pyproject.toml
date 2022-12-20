@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "threatmodel"
-version = "0.0.3"
+version = "0.0.4"
 description = "Threatmodeling as Code"
 readme = "README.md"
 authors = [{ name = "hupe1980" }]

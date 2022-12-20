@@ -14,8 +14,6 @@ python3 threatmodel.py
 ```python
 #!/usr/bin/env python3
 
-# threatmodel.py
-
 import threatmodel as tm
 
 model = tm.Model("Demo Model")
@@ -67,8 +65,18 @@ Output:
 ## Jupyter Threatbook
 > Threatmodeling with jupyter notebooks
 
-![threatbook.png](.assets/threatbook.png)
+![threatbook.png](https://github.com/hupe1980/threatmodel/raw/main/.assets/threatbook.png)
 
+
+## High level elements (threatmodel/plus*)
+```python
+import threatmodel.plus_aws as plus_aws
+
+# ...
+
+alb = plus_aws.ApplicationLoadBalancer(model, "ALB", waf=True)
+
+```
 ## Examples
 
 See more complete [examples](https://github.com/hupe1980/threatmodel/tree/master/examples).
