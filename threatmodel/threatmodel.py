@@ -1,7 +1,6 @@
 from abc import ABC, ABCMeta, abstractmethod
 from typing import Dict, List, Tuple, Any, Optional, Set
 from enum import Enum
-import uuid
 
 from .node import Construct
 
@@ -50,10 +49,13 @@ class Model(Construct):
 class Element(Construct):
     """A generic element"""
 
-    def __init__(self, model: Construct, name: str):
+    def __init__(self, model: Construct, name: str, in_scope: bool = True, trust_boundary: Optional["TrustBoundary"] = None):
         super().__init__(model, name)
+        
         self.name = name
-        self.uuid = uuid.uuid4()
+        self.in_scope = in_scope
+        self.trust_boundary = trust_boundary
+
         self.controls = Controls()
 
     @property
@@ -64,11 +66,17 @@ class Element(Construct):
 
 class Risk:
     def __init__(self, element: Element, threat: "Threat") -> None:
+        self.id = f"{threat.id}@{element.name}"
         self.target = element.name
         self.description = threat.description
         self.details = threat.details
         self.severity = threat.severity
         self.likelihood = threat.likelihood
+
+    def __repr__(self):
+        return "<{0}.{1}({2}) at {3}>".format(
+            self.__module__, type(self).__name__, self.id, hex(id(self))
+        )
 
     def __str__(self) -> str:
         return f"'{self.target}': {self.description}\n{self.details}\n{self.severity}"
@@ -81,6 +89,13 @@ class Result:
     def add_risk(self, *risks: Risk) -> None:
         for risk in risks:
             self.risks.append(risk)
+
+
+class TrustBoundary(Element):
+    """Trust boundary groups elements and data with the same trust level."""
+
+    def __init__(self, scope: Construct, name: str) -> None:
+        super().__init__(scope, name)
 
 
 class Data:
@@ -148,10 +163,10 @@ class Protocol(Enum):
 
 
 class DataFlow(Element):
-    """A data flow from a source to a sink"""
+    """A data flow"""
 
-    def __init__(self, model, name, source, sink, protocol):
-        super().__init__(model, name)
+    def __init__(self, scope: Construct, name: str, source: "TechnicalAsset", sink: "TechnicalAsset", protocol: Protocol):
+        super().__init__(scope, name)
 
         self.source = source
         self.sink = sink
@@ -213,11 +228,71 @@ class Machine(Enum):
     SERVERLESS = "serverless"
 
 
+class Technology(Enum):
+    UNKNOWN = "unknown-technology"
+    CLIENT_SYSTEM = "client-system"
+    BROWSER = "browser"
+    DESKTOP = "desktop"
+    MOBILE_APP = "mobile-app"
+    DEVOPS_CLIENT = "devops-client"
+    WEB_SERVER = "web-server"
+    WEB_APPLICATION = "web-application"
+    APPLICATION_SERVER = "application-server"
+    DATABASE = "database"
+    FILE_SERVER = "file-server"
+    LOCAL_FILE_SERVER = "local-file-system"
+    ERP = "erp"
+    CMS = "cms"
+    WEB_SERVICE_REST = "web-service-rest"
+    WEB_SERVICE_SOAP = "web-service-soap"
+    EJB = "ejb"
+    SEARCH_INDEX = "search-index"
+    SEARCH_ENGINE = "search-engine"
+    SERVICE_REGISTRY = "service-registry"
+    REVERSE_PROXY = "reverse-proxy"
+    LOAD_BALANCER = "load-balancer"
+    BUILD_PIPELINE = "build-pipeline"
+    SOURCECODE_REPOSITORY = "sourcecode-repository"
+    ARTIFACT_REGISTRY = "artifact-registry"
+    CODE_INSPECTION_PLATFORM = "code-inspection-platform"
+    MONITORING = "monitoring"
+    LDAP_SERVER = "ldap-server"
+    CONTAINER_PLATFORM = "container-platform"
+    BATCH_PROCESSING = "batch-processing"
+    EVENT_LISTENER = "event-listener"
+    IDENTITIY_PROVIDER = "identity-provider"
+    IDENTITY_STORE_LDAP = "identity-store-ldap"
+    IDENTITY_STORE_DATABASE = "identity-store-database"
+    TOOL = "tool"
+    CLI = "cli"
+    TASK = "task"
+    FUNCTION = "function"
+    GATEWAY = "gateway"
+    IOT_DEVICE = "iot-device"
+    MESSAGE_QUEUE = "message-queue"
+    STREAM_PROCESSING = "stream-processing"
+    SERVICE_MESH = "service-mesh"
+    DATA_LAKE = "data-lake"
+    REPORT_ENGINE = "report-engine"
+    AI = "ai"
+    MAIL_SERVER = "mail-server"
+    VAULT = "vault"
+    HASM = "hsm"
+    WAF = "waf"
+    IDS = "ids"
+    IPS = "ips"
+    SCHEDULER = "scheduler"
+    MAINFRAME = "mainframe"
+    BLOCK_STORAGE = "block-storage"
+    LIBRARY = "library"
+
+
 class TechnicalAsset(Element, metaclass=ABCMeta):
-    def __init__(self, scope: Construct, name: str, type: TechnicalAssetType, machine: Machine, environment_variables: bool = False, internet: bool = False):
+    def __init__(self, scope: Construct, name: str, type: TechnicalAssetType, machine: Machine, technology: Technology, environment_variables: bool = False, internet: bool = False):
         super().__init__(scope, name)
 
         self.machine = machine
+        self.technolgy = technology
         self.environment_variables = environment_variables
         self.internet = internet
 
@@ -232,10 +307,32 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
         for item in data:
             self._data_assets_stored.add(item)
 
+    @property
+    def web_application(self) -> bool:
+        if self.technolgy in [
+            Technology.WEB_SERVER,
+            Technology.WEB_APPLICATION,
+            Technology.APPLICATION_SERVER,
+            Technology.ERP,
+            Technology.CMS,
+            Technology.IDENTITIY_PROVIDER,
+            Technology.REPORT_ENGINE,
+        ]:
+            return True
+        return False
+
+    @property
+    def web_service(self) -> bool:
+        if self.technolgy in [
+            Technology.WEB_SERVICE_REST, 
+            Technology.WEB_SERVICE_SOAP,
+        ]:
+            return True
+        return False
+
 
 class ExternalEntity(TechnicalAsset):
-    """A External entity represent any entity outside of the application that sends or
-receives data, communicating with the system."""
+    """A External entity represent any entity outside of the application that sends or receives data, communicating with the system."""
 
     def __init__(self, scope: Construct, name: str, **kwargs: Any):
         super().__init__(scope, name, TechnicalAssetType.EXTERNAL_ENTITY, **kwargs)
