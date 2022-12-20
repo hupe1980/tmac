@@ -1,11 +1,35 @@
-from .threatmodel import Data, Protocol, DataFlow, Model, Element, Risk, Machine, Technology, TechnicalAsset, ExternalEntity, Process, DataStore, Result, Threat, Likelihood, Severity, Threatlib
+from .threatmodel import (
+    AttackCategory, 
+    Data, 
+    Protocol, 
+    DataFlow, 
+    Model, 
+    Element,
+    Likelihood, 
+    Severity, 
+    Impact, 
+    Risk, 
+    Machine, 
+    Technology, 
+    TechnicalAsset, 
+    ExternalEntity, 
+    Process, 
+    DataStore, 
+    Result, 
+    Threat, 
+    Threatlib,
+)
 from .threatlib import DEFAULT_THREATLIB
 
 __all__ = (
+    "AttackCategory",
     "Data",
     "Protocol",
     "DataFlow",
     "Element",
+     "Likelihood",
+    "Severity",
+    "Impact",
     "Risk",
     "Model",
     "Result",
@@ -17,7 +41,5 @@ __all__ = (
     "DataStore",
     "Threat",
     "Threatlib",
-    "Likelihood",
-    "Severity",
     "DEFAULT_THREATLIB"
 )

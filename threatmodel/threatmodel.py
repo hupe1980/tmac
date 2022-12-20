@@ -51,7 +51,7 @@ class Element(Construct):
 
     def __init__(self, model: Construct, name: str, in_scope: bool = True, trust_boundary: Optional["TrustBoundary"] = None):
         super().__init__(model, name)
-        
+
         self.name = name
         self.in_scope = in_scope
         self.trust_boundary = trust_boundary
@@ -64,14 +64,63 @@ class Element(Construct):
         return threatlib.apply(self)
 
 
+class Impact(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    VERY_HIGH = "very-high"
+
+
+class Likelihood(Enum):
+    UNLIKELY = "unlikely"
+    LIKELY = "likely"
+    VERY_LIKELY = "very-likely"
+    FREQUENT = "frequent"
+
+
+class Severity(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    ELEVATED = "elevated"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
 class Risk:
-    def __init__(self, element: Element, threat: "Threat") -> None:
+    def __init__(self, element: Element, threat: "Threat", impact: Impact, likelihood: Likelihood, fix_severity: Optional["Severity"] = None) -> None:
         self.id = f"{threat.id}@{element.name}"
         self.target = element.name
+        self.name = threat.name
         self.description = threat.description
-        self.details = threat.details
-        self.severity = threat.severity
-        self.likelihood = threat.likelihood
+        self.impact = impact
+        self.likelihood = likelihood
+
+        if fix_severity is None:
+            self.severity = self._calculate_severity(impact, likelihood)
+        else:
+            self.severity = fix_severity
+
+    def _calculate_severity(self, impact: Impact, likelihood: Likelihood) -> "Severity":
+        impact_weights = {Impact.LOW: 1, Impact.MEDIUM: 2,
+                          Impact.HIGH: 3, Impact.VERY_HIGH: 4}
+        likelihood_weights = {Likelihood.UNLIKELY: 1, Likelihood.LIKELY: 2,
+                              Likelihood.VERY_LIKELY: 3, Likelihood.FREQUENT: 4}
+
+        result = likelihood_weights[likelihood] * impact_weights[impact]
+
+        if result <= 1:
+            return Severity.LOW
+
+        if result <= 3:
+            return Severity.MEDIUM
+
+        if result <= 8:
+            return Severity.ELEVATED
+
+        if result <= 12:
+            return Severity.HIGH
+
+        return Severity.CRITICAL
 
     def __repr__(self):
         return "<{0}.{1}({2}) at {3}>".format(
@@ -79,7 +128,7 @@ class Risk:
         )
 
     def __str__(self) -> str:
-        return f"'{self.target}': {self.description}\n{self.details}\n{self.severity}"
+        return f"'{self.target}': {self.name}\n{self.description}\n{self.severity}"
 
 
 class Result:
@@ -183,8 +232,7 @@ class DataFlow(Element):
         for item in data:
             self._data_received.add(item)
 
-    @property
-    def encrypted(self) -> bool:
+    def is_encrypted(self) -> bool:
         if self.protocol in [
             Protocol.HTTPS,
             Protocol.WSS,
@@ -210,8 +258,7 @@ class DataFlow(Element):
             return True
         return False
 
-    @property
-    def bidirectional(self) -> bool:
+    def is_bidirectional(self) -> bool:
         return len(self._data_sent) > 0 and len(self._data_received) > 0
 
 
@@ -287,8 +334,16 @@ class Technology(Enum):
     LIBRARY = "library"
 
 
+class Encryption(Enum):
+    NONE = "none"
+    TRANSPARENT = "transparent"
+    SYMMETRIC_SHARED_KEY = "symmetric-shared-key"
+    ASYMMETRIC_SHARED_KEY = "asymmetric-shared-key"
+    ENDUSER_INDIVIDUAL_KEY = "enduser-individual-key"
+
+
 class TechnicalAsset(Element, metaclass=ABCMeta):
-    def __init__(self, scope: Construct, name: str, type: TechnicalAssetType, machine: Machine, technology: Technology, environment_variables: bool = False, internet: bool = False):
+    def __init__(self, scope: Construct, name: str, type: TechnicalAssetType, machine: Machine, technology: Technology, environment_variables: bool = False, internet: bool = False, encryption: Encryption = Encryption.NONE):
         super().__init__(scope, name)
 
         self.machine = machine
@@ -303,12 +358,13 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
         for item in data:
             self._data_assets_processed.add(item)
 
-    def stores(self, *data: Data) -> None:
+    def stores(self, *data: Data, no_process: bool = False) -> None:
         for item in data:
             self._data_assets_stored.add(item)
+            if not no_process:
+                self._data_assets_processed.add(item)
 
-    @property
-    def web_application(self) -> bool:
+    def is_web_application(self) -> bool:
         if self.technolgy in [
             Technology.WEB_SERVER,
             Technology.WEB_APPLICATION,
@@ -321,10 +377,9 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
             return True
         return False
 
-    @property
-    def web_service(self) -> bool:
+    def is_web_service(self) -> bool:
         if self.technolgy in [
-            Technology.WEB_SERVICE_REST, 
+            Technology.WEB_SERVICE_REST,
             Technology.WEB_SERVICE_SOAP,
         ]:
             return True
@@ -352,32 +407,74 @@ class DataStore(TechnicalAsset):
         super().__init__(scope, name, TechnicalAssetType.DATASTORE, **kwargs)
 
 
-class Severity(Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    ELEVATED = "elevated"
-    HIGH = "high"
-    CRITICAL = "critical"
+class AttackCategory(Enum):
+    ENGAGE_IN_DECEPTIVE_INTERACTIONS = "Engage in Deceptive Interactions"
+    """Attack patterns within this category focus on malicious interactions with a
+    target in an attempt to deceive the target and convince the target that it is 
+    interacting with some other principal and as such take actions based on the 
+    level of trust that exists between the target and the other principal.
+    https://capec.mitre.org/data/definitions/156.html"""
 
+    ABUSE_EXISTING_FUNCTIONALITY = "Abuse Existing Functionality"
+    """An adversary uses or manipulates one or more functions of an application in 
+    order to achieve a malicious objective not originally intended by the application, 
+    or to deplete a resource to the point that the target's functionality is affected.
+    https://capec.mitre.org/data/definitions/210.html"""
 
-class Likelihood(Enum):
-    UNLIKELY = "unlikely",
-    LIKELY = "likely",
-    VERY_LIKELY = "very-likely",
-    FREQUENT = "frequent",
+    MANIPULATE_DATA_STRUCTURES = "Manipulate Data Structures"
+    """Attack patterns in this category manipulate and exploit characteristics of system 
+    data structures in order to violate the intended usage and protections of these structures.
+    https://capec.mitre.org/data/definitions/255.html"""
+
+    MANIPULATE_SYSTEM_RESOURCES = "Manipulate System Resources"
+    """Attack patterns within this category focus on the adversary's ability to manipulate one or 
+    more resources in order to achieve a desired outcome.
+    https://capec.mitre.org/data/definitions/262.html"""
+
+    INJECT_UNEXPECTED_ITEMS = "Inject Unexpected Items"
+    """Attack patterns within this category focus on the ability to control or disrupt the 
+    behavior of a target either through crafted data submitted via an interface for data input, 
+    or the installation and execution of malicious code on the target system.
+    https://capec.mitre.org/data/definitions/152.html"""
+
+    EMPLOY_PROBALILISTIC_TECHNIQUES = "Employ Probabilistic Techniques"
+    """An attacker utilizes probabilistic techniques to explore and overcome security properties 
+    of the target that are based on an assumption of strength due to the extremely low mathematical 
+    probability that an attacker would be able to identify and exploit the very rare specific 
+    conditions under which those security properties do not hold.
+    https://capec.mitre.org/data/definitions/223.html"""
+
+    MANIPULATE_TIMING_AND_STATE = "Manipulate Timing and State"
+    """An attacker exploits weaknesses in timing or state maintaining functions to perform actions 
+    that would otherwise be prevented by the execution flow of the target code and processes.
+    https://capec.mitre.org/data/definitions/172.html"""
+
+    COLLECT_AND_ANALYZE_INFORMATION = "Collect and Analyze Information"
+    """Attack patterns within this category focus on the gathering, collection, and theft of 
+    information by an adversary.
+    https://capec.mitre.org/data/definitions/118.html
+    """
+
+    SUBVERT_ACCESS_CONTROL = "Subvert Access Control"
+    """An attacker actively targets exploitation of weaknesses, limitations and assumptions 
+    in the mechanisms a target utilizes to manage identity and authentication as well as 
+    manage access to its resources or authorize functionality.
+    https://capec.mitre.org/data/definitions/225.html
+    """
 
 
 class Threat(ABC):
     """Represents a possible threat"""
 
-    def __init__(self, id: str, target: Tuple[Any, ...], description: str = "", details: str = "", severity: Severity = Severity.HIGH, likelihood: Likelihood = Likelihood.VERY_LIKELY, condition: str = "", prerequisites: str = "", mitigations: str = "", example: str = "", references: str = "") -> None:
+    def __init__(self, id: str, name: str, target: Tuple[Any, ...], category: AttackCategory, description: str = "", prerequisites: List[str] = [], mitigations: List[str] = [], cwe_ids: List[int] = []) -> None:
         self.id = id
-        self.description = description
+        self.name = name
         self.target = target
-        self.details = details
-        self.severity = severity
-        self.likelihood = likelihood
-        self.condition = condition
+        self.category = category
+        self.description = description
+        self.prerequisites = prerequisites
+        self.mitigations = mitigations
+        self.cwe_ids = cwe_ids
 
     def is_applicable(self, target: "Element") -> bool:
         if not isinstance(target, self.target):
@@ -394,6 +491,7 @@ class Threatlib:
 
     def __init__(self) -> None:
         self.lib: Dict[str, "Threat"] = dict()
+        self.excludes: List[str] = list()
 
     def add_threats(self, *threats: "Threat") -> None:
         for threat in threats:
@@ -403,6 +501,9 @@ class Threatlib:
         risks: List["Risk"] = list()
 
         for item in self.lib.values():
+            if item.id in self.excludes:
+                continue
+
             if item.is_applicable(target):
                 risk = item.apply(target)
                 if risk is not None:
