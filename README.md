@@ -51,7 +51,7 @@ authenticate= tm.DataFlow(
     "Authenticate",
     web_api,
     database ,
-    protocol=tm.Protocol.SQL_ACCESS_PROTOCOL,
+    protocol=tm.Protocol.SQL,
 )
 
 authenticate.sends(tm.Data("AuthenticateUserQuery"))
