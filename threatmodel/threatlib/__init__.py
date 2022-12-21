@@ -3,8 +3,8 @@ from typing import Optional
 from ..asset import Process, Technology
 from ..control import Control
 from ..data_flow import Authentication, DataFlow
-from ..risk import Likelihood, Impact, Risk
-from ..threat import AttackCategory,  Threat, Threatlib
+from ..risk import Likelihood, Impact, Risk, Treatment
+from ..threat import AttackCategory, Threat, Threatlib
 from ..element import Element
 
 # See https://capec.mitre.org/data/definitions/2000.html
@@ -34,16 +34,19 @@ class CAPEC_10(Threat):
         )
 
     def apply(self, target: "Element") -> Optional["Risk"]:
+        # Typeguard
         if not isinstance(target, Process):
             return None
 
+        # Prerequisites
         if not target.is_using_environment_variables():
             return None
 
+        # Mitigations
         if not target.has_controls(Control.INPUT_SANITIZING, Control.BOUNDS_CHECKING):
             return Risk(target, self, Impact.HIGH, Likelihood.VERY_LIKELY)
 
-        return None
+        return Risk(target, self, Impact.HIGH, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
 
 
 class CAPEC_66(Threat):
@@ -67,12 +70,15 @@ class CAPEC_66(Threat):
         )
 
     def apply(self, target: "Element") -> Optional["Risk"]:
+        # Typeguard
         if not isinstance(target, DataFlow):
             return None
 
+        # Prerequisites
         if not target.is_relational_database_protocol():
             return None
 
+        # Mitigations
         if not target.source.has_controls(Control.INPUT_SANITIZING, Control.INPUT_VALIDATION, Control.PARAMETERIZATION):
             likelihood = Likelihood.LIKELY
             if target.source.has_control(Control.WAF):
@@ -80,7 +86,7 @@ class CAPEC_66(Threat):
 
             return Risk(target.source, self, Impact.HIGH, likelihood)
 
-        return None
+        return Risk(target, self, Impact.HIGH, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
 
 
 class CAPEC_100(Threat):
@@ -108,13 +114,18 @@ class CAPEC_100(Threat):
         )
 
     def apply(self, target: "Element") -> Optional["Risk"]:
+        # Typeguard
         if not isinstance(target, Process):
             return None
 
+        # Prerequisites
+        # TODO
+
+        # Mitigations
         if not target.has_control(Control.BOUNDS_CHECKING):
             return Risk(target, self, Impact.VERY_HIGH, Likelihood.VERY_LIKELY)
 
-        return None
+        return Risk(target, self, Impact.VERY_HIGH, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
 
 
 class CAPEC_101(Threat):
@@ -138,16 +149,19 @@ class CAPEC_101(Threat):
         )
 
     def apply(self, target: "Element") -> Optional["Risk"]:
+        # Typeguard
         if not isinstance(target, Process):
             return None
 
+        # Prerequisites
         if not target.is_web_application():
             return None
 
+        # Mitigations
         if not target.has_at_least_one_of_the_controls(Control.AVOID_SERVER_SIDE_INCLUDES, Control.INPUT_SANITIZING):
             return Risk(target, self, Impact.HIGH, Likelihood.LIKELY)
 
-        return None
+        return Risk(target, self, Impact.HIGH, Likelihood.LIKELY, treatment=Treatment.MITIGATED)
 
 
 class CAPEC_102(Threat):
@@ -172,16 +186,19 @@ class CAPEC_102(Threat):
         )
 
     def apply(self, target: "Element") -> Optional["Risk"]:
+        # Typeguard
         if not isinstance(target, DataFlow):
             return None
 
+        # Prerequisites
         if not target.authentication == Authentication.SESSION_ID:
             return None
 
+        # Mitigations
         if not target.is_encrypted():
             return Risk(target, self, Impact.HIGH, Likelihood.LIKELY)
 
-        return None
+        return Risk(target, self, Impact.HIGH, Likelihood.LIKELY, treatment=Treatment.MITIGATED)
 
 
 class CAPEC_126(Threat):
@@ -214,16 +231,19 @@ class CAPEC_126(Threat):
         )
 
     def apply(self, target: "Element") -> Optional["Risk"]:
+        # Typeguard
         if not isinstance(target, Process):
             return None
 
+        # Prerequisites
         if not target.technology in [Technology.FILE_SERVER, Technology.LOCAL_FILE_SYSTEM]:
             return None
 
+        # Mitigations
         if not target.has_controls(Control.INPUT_SANITIZING, Control.INPUT_VALIDATION):
             return Risk(target, self, Impact.MEDIUM, Likelihood.VERY_LIKELY)
 
-        return None
+        return Risk(target, self, Impact.MEDIUM, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
 
 
 class CAPEC_676(Threat):
@@ -254,16 +274,19 @@ class CAPEC_676(Threat):
         )
 
     def apply(self, target: "Element") -> Optional["Risk"]:
+        # Typeguard
         if not isinstance(target, DataFlow):
             return None
 
+        # Prerequisites
         if not target.is_nosql_database_protocol():
             return None
 
+        # Mitigations
         if not target.source.has_controls(Control.INPUT_SANITIZING, Control.INPUT_VALIDATION):
             return Risk(target.source, self, Impact.HIGH, Likelihood.LIKELY)
 
-        return None
+        return Risk(target.source, self, Impact.HIGH, Likelihood.LIKELY, treatment=Treatment.MITIGATED)
 
 
 DEFAULT_THREATLIB = Threatlib()

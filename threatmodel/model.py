@@ -1,17 +1,17 @@
 from typing import Dict, List, Optional, TYPE_CHECKING, cast
 from tabulate import tabulate
 
-from .asset import ExternalEntity, DataStore, TechnicalAsset
-from .data_flow import DataFlow
+from .asset import TechnicalAsset
 from .element import Element
 from .node import Construct
-from .risk import Risk, Treatment
-from .diagram import SequenceDiagram
+from .common import is_notebook, is_ci
+from .diagram import DataFlowDiagram
 from .table_format import TableFormat
 from .threatlib import DEFAULT_THREATLIB
 
 if TYPE_CHECKING:
     from .threat import Threat, Threatlib
+    from .risk import Risk, Treatment
 
 
 class Model(Construct):
@@ -41,7 +41,7 @@ class Model(Construct):
             self.threatlib = threatlib
 
     @property
-    def technical_assets(self)-> List["TechnicalAsset"]:
+    def technical_assets(self) -> List["TechnicalAsset"]:
         return cast(List["TechnicalAsset"], list(filter(lambda c: isinstance(c, TechnicalAsset), self.node.find_all())))
 
     def evaluate(self) -> "Result":
@@ -54,36 +54,42 @@ class Model(Construct):
 
         return result
 
+    def is_notebook(self) -> bool:
+        return is_notebook()
+
+    def is_ci(self) -> bool:
+        return is_ci()
+
 
 class Result:
-    def __init__(self, model: Model) -> None:
+    def __init__(self, model: "Model") -> None:
         self._model = model
-        self._risks: Dict[str, Risk] = dict()
-        self._elements: List[Element] = list()
+        self._risks: Dict[str, "Risk"] = dict()
+        self._elements: List["Element"] = list()
 
-    def add_risk(self, *risks: Risk) -> None:
+    def add_risk(self, *risks: "Risk") -> None:
         for risk in risks:
             self._risks[risk.id] = risk
 
-    def add_elements(self, *elements: Element) -> None:
+    def add_elements(self, *elements: "Element") -> None:
         for element in elements:
             self._elements.append(element)
 
     @property
-    def technical_assets(self)-> List["TechnicalAsset"]:
+    def technical_assets(self) -> List["TechnicalAsset"]:
         return cast(List["TechnicalAsset"], list(filter(lambda c: isinstance(c, TechnicalAsset), self._elements)))
-    
+
     @property
-    def risks(self) -> List[Risk]:
+    def risks(self) -> List["Risk"]:
         return list(self._risks.values())
 
     def get_threat_by_id(self, id: str) -> Optional["Threat"]:
         return self._model.threatlib.get(id)
 
-    def get_risk_by_id(self, id: str) -> Risk:
+    def get_risk_by_id(self, id: str) -> "Risk":
         return self._risks[id]
 
-    def treat_risk(self, id: str, treatment: Treatment) -> None:
+    def treat_risk(self, id: str, treatment: "Treatment") -> None:
         self._risks[id].treat(treatment)
 
     def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
@@ -96,29 +102,15 @@ class Result:
 
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
-    def sequence_diagram(self) -> str:
-        diagram = SequenceDiagram(self._model.title)
+    def data_flow_diagram(self, auto_view = True):
+        diagram = DataFlowDiagram(self._model.title, self._elements)
 
-        for e in self._elements:
-            if isinstance(e, DataFlow):
-                for data in e.data_sent:
-                    diagram.add_message(e.source.uniq_name,
-                                        e.sink.uniq_name, data.name)
-                for data in e.data_received:
-                    diagram.add_message(
-                        e.sink.uniq_name, e.source.uniq_name, data.name)
-                continue
+        if auto_view is False or self._model.is_ci():
+            diagram.save()
+            return
 
-            if isinstance(e, ExternalEntity):
-                diagram.add_actor(e.uniq_name, e.name)
-                continue
-
-            if isinstance(e, DataStore):
-                diagram.add_database(e.uniq_name, e.name)
-                continue
-
-            if isinstance(e, TechnicalAsset):
-                diagram.add_entity(e.uniq_name, e.name)
-                continue
-
-        return diagram.render()
+        if self._model.is_notebook():
+            from IPython import display
+            display.display(diagram)
+        else:
+            diagram.view()

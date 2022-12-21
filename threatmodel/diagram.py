@@ -1,34 +1,42 @@
-from typing import List, Optional
+from typing import List, TYPE_CHECKING
+import graphviz
 
-class SequenceDiagram:
-    def __init__(self, title: str) -> None:
-        self.title = title
-        self._participants: List[str] = list()
-        self._messages: List[str] = list()
+from .asset import ExternalEntity, DataStore, TechnicalAsset
+from .data_flow import DataFlow
 
-        self._template = """@startuml {title}
-{participants}
-{messages}
-@enduml"""
 
-    def render(self) -> str:
-        return self._template.format(
-            title=self.title, 
-            participants="\n".join(self._participants), 
-            messages="\n".join(self._messages),
-        )
+if TYPE_CHECKING:
+    from .element import Element
 
-    def add_actor(self, id: str, name: str) -> None:
-        self._participants.append(f'actor {id} as "{name}"')
 
-    def add_database(self, id: str, name: str) -> None:
-        self._participants.append(f'database {id} as "{name}"')
+class DataFlowDiagram(graphviz.Digraph):
+    def __init__(self, title: str, elements: List["Element"]) -> None:
+        super().__init__(title, engine='fdp')
 
-    def add_entity(self, id: str, name: str) -> None:
-        self._participants.append(f'entity {id} as "{name}"')
+        self.attr("graph", fontname="Arial", fontsize="12", overlap="false")
+        self.attr("node", fontname="Arial", fontsize="12",
+                  rankdir="lr", margin="0.02")
 
-    def add_message(self, sender_id: str, receiver_id: str, request: str, response: Optional[str] = None) -> None:
-        self._messages.append(f"{sender_id} -> {receiver_id}: {request}")
-        if response:
-            self._messages.append(f"{sender_id} <- {receiver_id}: {response}")
+        for e in elements:
+            if isinstance(e, DataFlow):
+                self.edge(e.source.uniq_name, e.sink.uniq_name, f"{e.protocol}: {e.name}", 
+                    fontname="Arial",
+                    fontsize="8",
+                    arrowhead="normal",
+                    arrowsize="0.5",
+                )
+                continue
 
+            if isinstance(e, ExternalEntity):
+                self.node(e.uniq_name, e.name,shape="box")
+                continue
+
+            if isinstance(e, DataStore):
+                self.attr("node", shape="cylinder")
+                self.node(e.uniq_name, e.name, shape="cylinder")
+                continue
+
+            if isinstance(e, TechnicalAsset):
+                self.attr("node", shape="circle")
+                self.node(e.uniq_name, e.name, shape="circle")
+                continue

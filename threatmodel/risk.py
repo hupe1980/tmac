@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from .element import Element
     from .threat import Threat
 
+
 class Impact(Enum):
     LOW = "low"
     MEDIUM = "medium"
@@ -40,7 +41,7 @@ class Treatment(Enum):
     UNCHECKED = "unchecked"
     IN_DISCUSSION = "in-discussion"
     IN_PROGRESS = "in-progress",
-    MITIGATED= "mitigated"
+    MITIGATED = "mitigated"
     TRANSFERRED = "transferred"
     AVOIDED = "avoided"
     ACCEPTED = "accepted"
@@ -51,7 +52,12 @@ class Treatment(Enum):
 
 
 class Risk:
-    def __init__(self, element: "Element", threat: "Threat", impact: "Impact", likelihood: "Likelihood", fix_severity: Optional["Severity"] = None) -> None:
+    def __init__(self, element: "Element", threat: "Threat",
+                 impact: "Impact",
+                 likelihood: "Likelihood",
+                 fix_severity: Optional["Severity"] = None,
+                 treatment: Treatment = Treatment.UNCHECKED,
+                 ) -> None:
         self.id = f"{threat.id}@{element.name}"
         self.target = element.name
         self.category = threat.category
@@ -67,7 +73,7 @@ class Risk:
         else:
             self.severity = fix_severity
 
-        self._treatment = Treatment.UNCHECKED
+        self._treatment = treatment
 
     @property
     def treatment(self) -> Treatment:

@@ -1,6 +1,7 @@
 from typing import Set, TYPE_CHECKING
 from enum import Enum
 
+from .common import OrderedEnum
 from .node import Construct
 from .element import Element
 
@@ -8,11 +9,49 @@ if TYPE_CHECKING:
     from .asset import TechnicalAsset
 
 
+class Classification(OrderedEnum):
+    UNKNOWN = 0
+    
+    PUBLIC = 1
+    """This type of data is freely accessible to the public (i.e. all employees/company personnel). 
+    It can be freely used, reused, and redistributed without repercussions. An example might be 
+    first and last names, job descriptions, or press releases"""
+
+    INTERNAL_ONLY = 2
+    """This type of data is strictly accessible to internal company personnel or internal employees 
+    who are granted access. This might include internal-only memos or other communications, business 
+    plans, etc."""
+
+    CONFIDENTIAL = 3
+    """Access to confidential data requires specific authorization and/or clearance. Types of confidential 
+    data might include Social Security numbers, cardholder data, M&A documents, and more. Usually, confidential 
+    data is protected by laws like HIPAA and the PCI DSS."""
+
+    RESTRICTED = 4
+    """Restricted data includes data that, if compromised or accessed without authorization, which could lead 
+    to criminal charges and massive legal fines or cause irreparable damage to the company. Examples of restricted 
+    data might include proprietary information or research and data protected by state and federal regulations."""
+
+
+    def __str__(self) -> str:
+        value_map = {
+            "0": "Unknown class",
+            "1": "Public",
+            "2": "Internal-only",
+            "3": "Confidential",
+            "4": "Restricted"
+        }
+
+        return value_map[str(self.value)]
+    
+
 class Data:
     """Represents a single piece of data that traverses the system"""
 
-    def __init__(self, name):
+    def __init__(self, name: str, classification: Classification = Classification.UNKNOWN, pii: bool = False):
         self.name = name
+        self.classificatio = classification
+        self.pii = pii
 
 
 class Protocol(Enum):
@@ -21,17 +60,15 @@ class Protocol(Enum):
     HTTPS = "https"
     WS = "ws"
     WSS = "wss"
-    REVERSE_PROXY_WEB_PROTOCOL = "reverse-proxy-web-protocol"
-    REVERSE_PROXY_WEB_PROTOCOL_ENCRYPTED = "reverse-proxy-web-protocol-encrypted"
     MQTT = "mqtt"
     JDBC = "jdbc"
     JDBC_ENCRYPTED = "jdbc-encrypted"
     ODBC = "odbc"
     ODBC_ENCRYPTED = "odbc-encrypted"
-    SQL_ACCESS_PROTOCOL = "sql-access-protocol"
-    SQL_ACCESS_PROTOCOL_ENCRYPTED = "sql-access-protocol-encrypted"
-    NOSQL_ACCESS_PROTOCOL = "nosql-access-protocol"
-    NOSQL_ACCESS_PROTOCOL_ENCRYPTED = "nosql-access-protocol-encrypted"
+    SQL = "sql"
+    SQL_ENCRYPTED = "sql-encrypted"
+    NOSQL = "nosql"
+    NOSQL_ENCRYPTED = "nosql-encrypted"
     BINARY = "binary"
     BINARY_ENCRYPTED = "binary-encrypted"
     TEXT = "text"
@@ -139,16 +176,16 @@ class DataFlow(Element):
         return self.protocol in [
             Protocol.JDBC,
             Protocol.ODBC,
-            Protocol.SQL_ACCESS_PROTOCOL,
+            Protocol.SQL,
             Protocol.JDBC_ENCRYPTED,
             Protocol.ODBC_ENCRYPTED,
-            Protocol.SQL_ACCESS_PROTOCOL_ENCRYPTED,
+            Protocol.SQL_ENCRYPTED,
         ]
 
     def is_nosql_database_protocol(self) -> bool:
         return self.protocol in [
-            Protocol.NOSQL_ACCESS_PROTOCOL,
-            Protocol.NOSQL_ACCESS_PROTOCOL_ENCRYPTED,
+            Protocol.NOSQL,
+            Protocol.NOSQL_ENCRYPTED,
         ]
 
     def is_encrypted(self) -> bool:
@@ -157,8 +194,8 @@ class DataFlow(Element):
             Protocol.WSS,
             Protocol.JDBC_ENCRYPTED,
             Protocol.ODBC_ENCRYPTED,
-            Protocol.NOSQL_ACCESS_PROTOCOL_ENCRYPTED,
-            Protocol.SQL_ACCESS_PROTOCOL_ENCRYPTED,
+            Protocol.NOSQL_ENCRYPTED,
+            Protocol.SQL_ENCRYPTED,
             Protocol.BINARY_ENCRYPTED,
             Protocol.TEXT_ENCRYPTED,
             Protocol.SSH,
@@ -166,7 +203,6 @@ class DataFlow(Element):
             Protocol.FTPS,
             Protocol.SCP,
             Protocol.LDAPS,
-            Protocol.REVERSE_PROXY_WEB_PROTOCOL_ENCRYPTED,
             Protocol.IIOP_ENCRYPTED,
             Protocol.JRMP_ENCRYPTED,
             Protocol.SMB_ENCRYPTED,

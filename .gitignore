@@ -130,3 +130,5 @@ dmypy.json
 
 .DS_Store
 examples/example.pu
+examples/*.gv
+examples/*.gv.pdf

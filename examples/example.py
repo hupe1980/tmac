@@ -42,7 +42,7 @@ authenticate= tm.DataFlow(
     "Authenticate",
     web_api,
     database ,
-    protocol=tm.Protocol.SQL_ACCESS_PROTOCOL,
+    protocol=tm.Protocol.SQL,
 )
 
 authenticate.sends(tm.Data("AuthenticateUserQuery"))
@@ -50,8 +50,7 @@ authenticate.receives(tm.Data("AuthenticateUserQueryResult"))
 
 result = model.evaluate()
 
-with open("example.pu","w+") as f:
-    f.write(result.sequence_diagram())
-
 print(result.risks_table(table_format=tm.TableFormat.GITHUB))
+
+result.data_flow_diagram(auto_view=False)
 
