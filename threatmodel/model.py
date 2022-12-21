@@ -1,16 +1,17 @@
-from typing import Dict, List, Optional, Set, TYPE_CHECKING
-import uuid
+from typing import Dict, List, Optional, TYPE_CHECKING
 from tabulate import tabulate
 
+from .asset import ExternalEntity, DataStore, TechnicalAsset
+from .data_flow import DataFlow
+from .element import Element
 from .node import Construct
 from .risk import Risk, Treatment
 from .diagram import SequenceDiagram
 from .table_format import TableFormat
+from .threatlib import DEFAULT_THREATLIB
 
 if TYPE_CHECKING:
-    from .control import Control
     from .threat import Threatlib
-    from .trust_boundary import TrustBoundary
 
 
 class Model(Construct):
@@ -35,15 +36,12 @@ class Model(Construct):
         self.title = title
 
         if threatlib is None:
-            # import when need to avoid circular import
-            from .threatlib import DEFAULT_THREATLIB
             self.threatlib = DEFAULT_THREATLIB
         else:
             self.threatlib = threatlib
 
     @property
     def technical_assets(self):
-        from .asset import TechnicalAsset
         return list(filter(lambda c: isinstance(c, TechnicalAsset), self.node.find_all()))
 
     def evaluate(self) -> "Result":
@@ -55,57 +53,6 @@ class Model(Construct):
                 result.add_elements(c)
 
         return result
-
-
-class Element(Construct):
-    """A generic element"""
-
-    def __init__(self, model: Construct, name: str, in_scope: bool = True, trust_boundary: Optional["TrustBoundary"] = None):
-        super().__init__(model, name)
-
-        self.name = name
-        self.uniq_name = self._uniq_name()
-        self.in_scope = in_scope
-        self.trust_boundary = trust_boundary
-
-        self._controls: Set["Control"] = set()
-
-    @property
-    def risks(self) -> List["Risk"]:
-        threatlib = Model.of(self).threatlib
-        return threatlib.apply(self)
-
-    @property
-    def controls(self) -> Set["Control"]:
-        return self._controls
-
-    def add_controls(self, *controls: "Control") -> None:
-        for control in controls:
-            self._controls.add(control)
-
-    def remove_controls(self, *controls: "Control") -> None:
-        for control in controls:
-            self._controls.remove(control)
-
-    def has_control(self, control: "Control") -> bool:
-        return control in self._controls
-
-    def get_risk_by_id(self, id: str) -> "Risk":
-        return [risk for risk in self.risks if risk.id == id][0]
-
-    def risks_table(self, table_format: "TableFormat" = TableFormat.SIMPLE) -> str:
-        headers = ["SID", "Severity", "Category", "Name", "Treatment"]
-        table = []
-
-        for risk in self.risks:
-            table.append([risk.id, risk.severity, risk.category,
-                         risk.name, risk.treatment])
-
-        return tabulate(table, headers=headers, tablefmt=str(table_format))
-
-    def _uniq_name(self) -> str:
-        uid = str(uuid.uuid4())[:8]
-        return f"{self.name}_{uid}"
 
 
 class Result:
@@ -142,10 +89,6 @@ class Result:
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
     def sequence_diagram(self) -> str:
-        # import when need to avoid circular import
-        from .asset import ExternalEntity, DataStore, TechnicalAsset
-        from .data_flow import DataFlow
-
         diagram = SequenceDiagram(self.model_title)
 
         for e in self._elements:
@@ -171,6 +114,3 @@ class Result:
                 continue
 
         return diagram.render()
-
-
-

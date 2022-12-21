@@ -2,10 +2,10 @@ from typing import Set, TYPE_CHECKING
 from enum import Enum
 
 from .node import Construct
-from .model import Element
+from .element import Element
 
 if TYPE_CHECKING:
-    from .model import TechnicalAsset
+    from .asset import TechnicalAsset
 
 
 class Data:

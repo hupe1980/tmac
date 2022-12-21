@@ -3,7 +3,7 @@ from typing import Dict, List, Any, Optional, Set, TYPE_CHECKING
 from enum import Enum
 
 from .node import Construct
-from .model import Element
+from .element import Element
 
 if TYPE_CHECKING:
     from .control import Control

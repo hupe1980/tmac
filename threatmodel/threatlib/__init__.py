@@ -5,7 +5,7 @@ from ..control import Control
 from ..data_flow import Authentication, DataFlow
 from ..risk import Likelihood, Impact, Risk
 from ..threat import AttackCategory,  Threat, Threatlib
-from ..model import Element
+from ..element import Element
 
 
 class CAPEC_10(Threat):
