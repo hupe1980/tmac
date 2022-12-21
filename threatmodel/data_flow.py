@@ -136,6 +136,7 @@ class DataFlow(Element):
                  sink: "TechnicalAsset",
                  protocol: Protocol,
                  vpn: bool = False,
+                 readonly: bool = False,
                  authentication: Authentication = Authentication.NONE,
                  authorization: Authorization = Authorization.NONE,
                  overwrite_edge_attrs: Dict[str, str] = dict()
@@ -146,6 +147,7 @@ class DataFlow(Element):
         self.sink = sink
         self.protocol = protocol
         self.vpn = vpn
+        self.readonly = readonly
         self.authentication = authentication
         self.authorization = authorization
         self.overwrite_edge_attrs = overwrite_edge_attrs

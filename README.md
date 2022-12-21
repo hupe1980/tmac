@@ -59,9 +59,6 @@ authenticate.receives(tm.Data("AuthenticateUserQueryResult"))
 
 result = model.evaluate()
 
-with open("example.pu","w+") as f:
-    f.write(result.sequence_diagram())
-
 print(result.risks_table(table_format=tm.TableFormat.GITHUB))
 ```
 Output:

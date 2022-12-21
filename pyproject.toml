@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "threatmodel"
-version = "0.0.10"
+version = "0.0.11"
 description = "Agile Threat Modeling as Code"
 readme = "README.md"
 authors = [{ name = "hupe1980" }]
@@ -13,6 +13,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
+    "Topic :: Security",
 ]
 keywords = ["agile", "threat-modeling", "cybersecurity", "appsec", "threatbook", "jupyter-notebook"]
 dependencies = [

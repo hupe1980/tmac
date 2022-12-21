@@ -29,5 +29,14 @@ class Control(Enum):
 
     WAF = "waf"
 
+    CSRF_TOKEN = "CSRF Token"
+
+    RE_AUTHENTICATION = "Re-Authentication"
+    
+    ONE_TIME_TOKEN =  "One-time Token"
+
+    CAPTCHA = "CAPTCHA"
+    
+
     def __str__(self) -> str:
         return str(self.value)

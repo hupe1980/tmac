@@ -49,6 +49,84 @@ class CAPEC_10(Threat):
         return Risk(target, self, Impact.HIGH, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
 
 
+class CAPEC_62(Threat):
+    def __init__(self) -> None:
+        super().__init__(
+            "CAPEC-62",
+            "Cross Site Request Forgery",
+            (DataFlow,),
+            category=AttackCategory.SUBVERT_ACCESS_CONTROL,
+            description="An attacker crafts malicious web links and distributes them (via web pages, email, etc.), typically in a targeted manner, hoping to induce users to click on the link and execute the malicious action against some third-party application. If successful, the action embedded in the malicious link will be processed and accepted by the targeted application with the users' privilege level. This type of attack leverages the persistence and implicit trust placed in user session cookies by many web applications today. In such an architecture, once the user authenticates to an application and a session cookie is created on the user's system, all following transactions for that session are authenticated using that cookie including potential actions initiated by an attacker and simply 'riding' the existing session cookie.",
+            prerequisites=[],
+            mitigations=[
+                "Use cryptographic tokens to associate a request with a specific action. The token can be regenerated at every request so that if a request with an invalid token is encountered, it can be reliably discarded. The token is considered invalid if it arrived with a request other than the action it was supposed to be associated with.",
+                "Although less reliable, the use of the optional HTTP Referrer header can also be used to determine whether an incoming request was actually one that the user is authorized for, in the current context.",
+                "Additionally, the user can also be prompted to confirm an action every time an action concerning potentially sensitive data is invoked. This way, even if the attacker manages to get the user to click on a malicious link and request the desired action, the user has a chance to recover by denying confirmation. This solution is also implicitly tied to using a second factor of authentication before performing such actions.",
+                "In general, every request must be checked for the appropriate authentication token as well as authorization in the current session context.",
+            ],
+            cwe_ids=[352, 306, 664, 732, 1275]
+        )
+
+    def apply(self, target: "Element") -> Optional["Risk"]:
+        # Typeguard
+        if not isinstance(target, DataFlow):
+            return None
+
+        # Prerequisites
+        if not target.sink.is_web_application():
+            return None
+        
+        # Mitigations
+        if not target.has_controls(Control.CSRF_TOKEN):
+            # User Interaction Based CSRF Defense
+            if not target.has_at_least_one_of_the_controls(Control.RE_AUTHENTICATION, Control.ONE_TIME_TOKEN, Control.CAPTCHA):
+                return Risk(target.sink, self, Impact.HIGH, Likelihood.VERY_LIKELY)
+            
+            return Risk(target.sink, self, Impact.MEDIUM, Likelihood.VERY_LIKELY)
+
+        return Risk(target.sink, self, Impact.HIGH, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
+
+
+class CAPEC_63(Threat):
+    def __init__(self) -> None:
+        super().__init__(
+            "CAPEC-63",
+            "Cross-Site Scripting (XSS)",
+            (Process,),
+            category=AttackCategory.INJECT_UNEXPECTED_ITEMS,
+            description="An adversary embeds malicious scripts in content that will be served to web browsers. The goal of the attack is for the target software, the client-side browser, to execute the script with the users' privilege level. An attack of this type exploits a programs' vulnerabilities that are brought on by allowing remote hosts to execute code and scripts. Web browsers, for example, have some simple security controls in place, but if a remote attacker is allowed to execute scripts (through injecting them in to user-generated content like bulletin boards) then these controls may be bypassed. Further, these attacks are very difficult for an end user to detect.",
+            prerequisites=[
+                "Target client software must be a client that allows scripting communication from remote hosts, such as a JavaScript-enabled Web Browser.",
+            ],
+            mitigations=[
+                "Design: Use browser technologies that do not allow client side scripting.",
+                "Design: Utilize strict type, character, and encoding enforcement.",
+                "Design: Server side developers should not proxy content via XHR or other means, if a http proxy for remote content is setup on the server side, the client's browser has no way of discerning where the data is originating from.",
+                "Implementation: Ensure all content that is delivered to client is sanitized against an acceptable content specification.",
+                "Implementation: Perform input validation for all remote content.",
+                "Implementation: Perform output validation for all remote content.",
+                "Implementation: Session tokens for specific host.",
+                "Implementation: Patching software. There are many attack vectors for XSS on the client side and the server side. Many vulnerabilities are fixed in service packs for browser, web servers, and plug in technologies, staying current on patch release that deal with XSS countermeasures mitigates this.",
+            ],
+            cwe_ids=[79, 20]
+        )
+
+    def apply(self, target: "Element") -> Optional["Risk"]:
+        # Typeguard
+        if not isinstance(target, Process):
+            return None
+
+        # Prerequisites
+        if not target.is_web_application():
+            return None
+
+        # Mitigations
+        if not target.has_controls(Control.INPUT_SANITIZING, Control.INPUT_VALIDATION):
+            return Risk(target, self, Impact.MEDIUM, Likelihood.LIKELY)
+
+        return Risk(target, self, Impact.MEDIUM, Likelihood.LIKELY, treatment=Treatment.MITIGATED)
+
+
 class CAPEC_66(Threat):
     def __init__(self) -> None:
         super().__init__(
@@ -293,6 +371,8 @@ DEFAULT_THREATLIB = Threatlib()
 
 DEFAULT_THREATLIB.add_threats(
     CAPEC_10(),
+    CAPEC_62(),
+    CAPEC_63(),
     CAPEC_66(),
     CAPEC_100(),
     CAPEC_101(),
@@ -304,6 +384,12 @@ DEFAULT_THREATLIB.add_threats(
 __all__ = (
     "DEFAULT_THREATLIB"
     "CAPEC_10",
+    "CAPEC_62",
+    "CAPEC_63",
+    "CAPEC_66",
     "CAPEC_100",
-    "CAPEC_101"
+    "CAPEC_101",
+    "CAPEC_102",
+    "CAPEC_126",
+    "CAPEC_676",
 )
