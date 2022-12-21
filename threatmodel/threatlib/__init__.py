@@ -37,7 +37,10 @@ class CAPEC_10(Threat):
         if not isinstance(target, Process):
             return None
 
-        if target.environment_variables is True and target.has_control(Control.INPUT_SANITIZING) is False and target.has_control(Control.BOUNDS_CHECKING) is False:
+        if not target.is_using_environment_variables():
+            return None
+
+        if not target.has_controls(Control.INPUT_SANITIZING, Control.BOUNDS_CHECKING):
             return Risk(target, self, Impact.HIGH, Likelihood.VERY_LIKELY)
 
         return None
@@ -70,10 +73,10 @@ class CAPEC_66(Threat):
         if not target.is_relational_database_protocol():
             return None
 
-        if target.source.has_control(Control.INPUT_SANITIZING) is False and target.source.has_control(Control.INPUT_VALIDATION) is False and target.source.has_control(Control.PARAMETERIZATION) is False:
+        if not target.source.has_controls(Control.INPUT_SANITIZING, Control.INPUT_VALIDATION, Control.PARAMETERIZATION):
             likelihood = Likelihood.LIKELY
             if target.source.has_control(Control.WAF):
-                likelihood = Likelihood.UNLIKELY # WAF Bypass
+                likelihood = Likelihood.UNLIKELY  # WAF Bypass
 
             return Risk(target.source, self, Impact.HIGH, likelihood)
 
@@ -138,10 +141,10 @@ class CAPEC_101(Threat):
         if not isinstance(target, Process):
             return None
 
-        if target.has_control(Control.AVOID_SERVER_SIDE_INCLUDES) or target.has_control(Control.INPUT_SANITIZING):
+        if not target.is_web_application():
             return None
 
-        if target.is_web_application():
+        if not target.has_at_least_one_of_the_controls(Control.AVOID_SERVER_SIDE_INCLUDES, Control.INPUT_SANITIZING):
             return Risk(target, self, Impact.HIGH, Likelihood.LIKELY)
 
         return None
@@ -172,7 +175,10 @@ class CAPEC_102(Threat):
         if not isinstance(target, DataFlow):
             return None
 
-        if not target.is_encrypted() and target.authentication == Authentication.SESSION_ID:
+        if not target.authentication == Authentication.SESSION_ID:
+            return None
+
+        if not target.is_encrypted():
             return Risk(target, self, Impact.HIGH, Likelihood.LIKELY)
 
         return None
@@ -214,7 +220,7 @@ class CAPEC_126(Threat):
         if not target.technology in [Technology.FILE_SERVER, Technology.LOCAL_FILE_SYSTEM]:
             return None
 
-        if target.has_control(Control.INPUT_SANITIZING) is False and target.has_control(Control.INPUT_VALIDATION) is False:
+        if not target.has_controls(Control.INPUT_SANITIZING, Control.INPUT_VALIDATION):
             return Risk(target, self, Impact.MEDIUM, Likelihood.VERY_LIKELY)
 
         return None
@@ -254,7 +260,7 @@ class CAPEC_676(Threat):
         if not target.is_nosql_database_protocol():
             return None
 
-        if target.source.has_control(Control.INPUT_SANITIZING) is False and target.source.has_control(Control.INPUT_VALIDATION) is False:
+        if not target.source.has_controls(Control.INPUT_SANITIZING, Control.INPUT_VALIDATION):
             return Risk(target.source, self, Impact.HIGH, Likelihood.LIKELY)
 
         return None

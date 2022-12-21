@@ -10,7 +10,7 @@ class ApplicationLoadBalancer(Process):
         super().__init__(scope, name,
                          machine=Machine.VIRTUAL,
                          technology=Technology.LOAD_BALANCER,
-                         environment_variables=False,
+                         uses_environment_variables=False,
                          human_use=False,
                          internet_facing=False,
                          encryption=Encryption.NONE,
@@ -19,7 +19,7 @@ class ApplicationLoadBalancer(Process):
                          custom_developed_parts=False,
                          **kwargs)
 
-        self.add_controls(Control.INPUT_BOUNDS_CHECKS)
+        self.add_controls(Control.BOUNDS_CHECKING)
 
         if waf:
             self.add_controls(Control.WAF)

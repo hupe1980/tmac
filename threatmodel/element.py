@@ -5,6 +5,7 @@ from tabulate import tabulate
 from .node import Construct
 from .risk import Risk
 from .table_format import TableFormat
+from .util import issublist
 
 if TYPE_CHECKING:
     from .control import Control
@@ -45,6 +46,12 @@ class Element(Construct):
 
     def has_control(self, control: "Control") -> bool:
         return control in self._controls
+
+    def has_controls(self, *controls: "Control") -> bool:
+        return set(controls).issubset(self._controls)
+
+    def has_at_least_one_of_the_controls(self, *controls: "Control") -> bool:
+        return len(self._controls.intersection(controls)) > 0
 
     def get_risk_by_id(self, id: str) -> "Risk":
         return [risk for risk in self.risks if risk.id == id][0]

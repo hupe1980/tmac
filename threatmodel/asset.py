@@ -116,7 +116,7 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
                  type: TechnicalAssetType,
                  machine: Machine,
                  technology: Technology,
-                 environment_variables: bool = False,
+                 uses_environment_variables: bool = False,
                  human_use: bool = False,
                  internet_facing: bool = False,
                  encryption: Encryption = Encryption.NONE,
@@ -130,7 +130,6 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
         self.type = type
         self.machine = machine
         self.technology = technology
-        self.environment_variables = environment_variables
         self.human_use = human_use
         self.internet_facing = internet_facing
         self.encryption = encryption
@@ -139,6 +138,7 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
         self.custom_developed_parts = custom_developed_parts
         self.accept_data_formats = accept_data_formats
 
+        self._uses_environment_variables = uses_environment_variables
         self._data_assets_processed: Set["Data"] = set()
         self._data_assets_stored: Set["Data"] = set()
 
@@ -151,6 +151,9 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
             self._data_assets_stored.add(item)
             if not no_process:
                 self._data_assets_processed.add(item)
+
+    def is_using_environment_variables(self) -> bool:
+        return self._uses_environment_variables
 
     def is_web_application(self) -> bool:
         return self.technology in [

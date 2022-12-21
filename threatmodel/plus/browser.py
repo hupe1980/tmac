@@ -9,7 +9,7 @@ class Browser(ExternalEntity):
         super().__init__(scope, name,
                          machine=Machine.PHYSICAL,
                          technology=Technology.BROWSER,
-                         environment_variables=False,
+                         uses_environment_variables=False,
                          human_use=True,
                          internet_facing=True,
                          encryption=Encryption.NONE,
