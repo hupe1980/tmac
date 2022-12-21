@@ -1,22 +1,12 @@
 from .threatlib import DEFAULT_THREATLIB
-from .model import (
-    Model,
-    Element,
-    Machine,
-    Technology,
-    DataFormat,
-    TechnicalAsset,
-    ExternalEntity,
-    Process,
-    DataStore,
-    Result,
-)
+from .model import Model, Element,Result
 from .trust_boundary import TrustBoundary
 from .threat import AttackCategory, Threat, Threatlib
 from .table_format import TableFormat
 from .risk import Likelihood, Severity, Impact, Treatment, Risk
 from .control import Control
 from .data_flow import Data, Protocol, Authentication, Authorization, DataFlow
+from .asset import Machine,Technology,DataFormat,TechnicalAsset,ExternalEntity,Process,DataStore
 
 
 __all__ = (

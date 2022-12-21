@@ -1,7 +1,7 @@
 from typing import Any
 
+from ..asset import ExternalEntity, Machine, Encryption, Technology
 from ..node import Construct
-from ..model import ExternalEntity, Machine, Encryption, Technology
 
 
 class Browser(ExternalEntity):
