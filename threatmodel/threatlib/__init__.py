@@ -1,15 +1,10 @@
 from typing import Optional
 
+from ..control import Control
+from ..data_flow import Authentication, DataFlow
 from ..risk import Likelihood, Impact, Risk
 from ..threat import AttackCategory,  Threat, Threatlib
-from ..model import (
-    Element,
-    Controls,
-    Process,
-    Authentication,
-    DataFlow,
-    Technology,
-)
+from ..model import Element, Process, Technology
 
 
 class CAPEC_10(Threat):
@@ -39,7 +34,7 @@ class CAPEC_10(Threat):
         if not isinstance(target, Process):
             return None
 
-        if target.environment_variables is True and target.has_control(Controls.INPUT_SANITIZING) is False and target.has_control(Controls.INPUT_BOUNDS_CHECKS) is False:
+        if target.environment_variables is True and target.has_control(Control.INPUT_SANITIZING) is False and target.has_control(Control.INPUT_BOUNDS_CHECKS) is False:
             return Risk(target, self, Impact.HIGH, Likelihood.VERY_LIKELY)
 
         return None
@@ -72,7 +67,7 @@ class CAPEC_66(Threat):
         if not target.is_relational_database_protocol():
             return None
 
-        if target.source.has_control(Controls.INPUT_SANITIZING) is False and target.source.has_control(Controls.INPUT_VALIDATION) is False and target.source.has_control(Controls.Parameterization) is False:
+        if target.source.has_control(Control.INPUT_SANITIZING) is False and target.source.has_control(Control.INPUT_VALIDATION) is False and target.source.has_control(Control.Parameterization) is False:
             return Risk(target.source, self, Impact.HIGH, Likelihood.LIKELY)
 
         return None
@@ -106,7 +101,7 @@ class CAPEC_100(Threat):
         if not isinstance(target, Process):
             return None
 
-        if not target.has_control(Controls.INPUT_BOUNDS_CHECKS):
+        if not target.has_control(Control.INPUT_BOUNDS_CHECKS):
             return Risk(target, self, Impact.VERY_HIGH, Likelihood.VERY_LIKELY)
 
         return None
@@ -136,7 +131,7 @@ class CAPEC_101(Threat):
         if not isinstance(target, Process):
             return None
 
-        if target.has_control(Controls.SERVER_SIDE_INCLUDES_DEACTIVATION) or target.has_control(Controls.INPUT_SANITIZING):
+        if target.has_control(Control.SERVER_SIDE_INCLUDES_DEACTIVATION) or target.has_control(Control.INPUT_SANITIZING):
             return None
 
         if target.is_web_application():
@@ -212,7 +207,7 @@ class CAPEC_126(Threat):
         if not target.technology in [Technology.FILE_SERVER, Technology.LOCAL_FILE_SYSTEM]:
             return None
 
-        if target.has_control(Controls.INPUT_SANITIZING) is False and target.has_control(Controls.INPUT_VALIDATION) is False:
+        if target.has_control(Control.INPUT_SANITIZING) is False and target.has_control(Control.INPUT_VALIDATION) is False:
             return Risk(target, self, Impact.MEDIUM, Likelihood.VERY_LIKELY)
 
         return None
@@ -252,7 +247,7 @@ class CAPEC_676(Threat):
         if not target.is_nosql_database_protocol():
             return None
 
-        if target.source.has_control(Controls.INPUT_SANITIZING) is False and target.source.has_control(Controls.INPUT_VALIDATION) is False:
+        if target.source.has_control(Control.INPUT_SANITIZING) is False and target.source.has_control(Control.INPUT_VALIDATION) is False:
             return Risk(target.source, self, Impact.HIGH, Likelihood.LIKELY)
 
         return None

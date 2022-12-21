@@ -1,7 +1,8 @@
 from typing import Any
 
+from ..control import Control
 from ..node import Construct
-from ..model import Process, Machine, Encryption, Technology, Controls
+from ..model import Process, Machine, Encryption, Technology
 
 
 class ApplicationLoadBalancer(Process):
@@ -18,7 +19,7 @@ class ApplicationLoadBalancer(Process):
                          custom_developed_parts=False,
                          **kwargs)
         
-        self.add_controls(Controls.INPUT_BOUNDS_CHECKS)
+        self.add_controls(Control.INPUT_BOUNDS_CHECKS)
 
         if waf:
-            self.add_controls(Controls.WAF)
+            self.add_controls(Control.WAF)

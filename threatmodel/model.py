@@ -10,7 +10,10 @@ from .diagram import SequenceDiagram
 from .table_format import TableFormat
 
 if TYPE_CHECKING:
+    from .control import Control
+    from .data_flow import Data
     from .threat import Threatlib
+    from .trust_boundary import TrustBoundary
 
 
 class Model(Construct):
@@ -67,7 +70,7 @@ class Element(Construct):
         self.in_scope = in_scope
         self.trust_boundary = trust_boundary
 
-        self._controls: Set["Controls"] = set()
+        self._controls: Set["Control"] = set()
 
     @property
     def risks(self) -> List["Risk"]:
@@ -75,18 +78,18 @@ class Element(Construct):
         return threatlib.apply(self)
 
     @property
-    def controls(self) -> Set["Controls"]:
+    def controls(self) -> Set["Control"]:
         return self._controls
 
-    def add_controls(self, *controls: "Controls") -> None:
+    def add_controls(self, *controls: "Control") -> None:
         for control in controls:
             self._controls.add(control)
 
-    def remove_controls(self, *controls: "Controls") -> None:
+    def remove_controls(self, *controls: "Control") -> None:
         for control in controls:
             self._controls.remove(control)
 
-    def has_control(self, control: "Controls") -> bool:
+    def has_control(self, control: "Control") -> bool:
         return control in self._controls
 
     def get_risk_by_id(self, id: str) -> Risk:
@@ -142,6 +145,9 @@ class Result:
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
     def sequence_diagram(self) -> str:
+        # import when need to avoid circular import
+        from .data_flow import DataFlow
+
         diagram = SequenceDiagram(self.model_title)
 
         for e in self._elements:
@@ -168,203 +174,6 @@ class Result:
 
         return diagram.render()
 
-
-class TrustBoundary(Element):
-    """Trust zone changes as data flows through the system."""
-
-    def __init__(self, scope: Construct, name: str) -> None:
-        super().__init__(scope, name)
-
-
-class Data:
-    """Represents a single piece of data that traverses the system"""
-
-    def __init__(self, name):
-        self.name = name
-
-
-class Controls(Enum):
-    """Controls implemented by/on and Element"""
-
-    INPUT_BOUNDS_CHECKS = "input-bounds-checks"
-
-    INPUT_SANITIZING = "input-sanitizing"
-
-    INPUT_VALIDATION = "input-validation"
-
-    Parameterization = "parameterization"
-    """Parameterized queries or stored procedures"""
-
-    SERVER_SIDE_INCLUDES_DEACTIVATION = "server-side-includes-deactivation"
-
-    WAF = "waf"
-
-    def __str__(self) -> str:
-        return str(self.value)
-
-
-class Protocol(Enum):
-    UNKNOEN = "unknown-protocol"
-    HTTP = "http"
-    HTTPS = "https"
-    WS = "ws"
-    WSS = "wss"
-    REVERSE_PROXY_WEB_PROTOCOL = "reverse-proxy-web-protocol"
-    REVERSE_PROXY_WEB_PROTOCOL_ENCRYPTED = "reverse-proxy-web-protocol-encrypted"
-    MQTT = "mqtt"
-    JDBC = "jdbc"
-    JDBC_ENCRYPTED = "jdbc-encrypted"
-    ODBC = "odbc"
-    ODBC_ENCRYPTED = "odbc-encrypted"
-    SQL_ACCESS_PROTOCOL = "sql-access-protocol"
-    SQL_ACCESS_PROTOCOL_ENCRYPTED = "sql-access-protocol-encrypted"
-    NOSQL_ACCESS_PROTOCOL = "nosql-access-protocol"
-    NOSQL_ACCESS_PROTOCOL_ENCRYPTED = "nosql-access-protocol-encrypted"
-    BINARY = "binary"
-    BINARY_ENCRYPTED = "binary-encrypted"
-    TEXT = "text"
-    TEXT_ENCRYPTED = "text-encrypted"
-    SSH = "ssh"
-    SSH_TUNNEL = "ssh-tunnel"
-    SMTP = "smtp"
-    SMTP_ENCRYPTED = "smtp-encrypted"
-    POP3 = "pop3"
-    POP3_ENCRYPTED = "pop3-encrypted"
-    IMAP = "imap"
-    IMAP_ENCRYPTED = "imap-encrypted"
-    FTP = "ftp"
-    FTPS = "ftps"
-    SFTP = "sftp"
-    SCP = "scp"
-    LDAP = "ldap"
-    LDAPS = "ldaps"
-    JMS = "jms"
-    NFS = "nfs"
-    SMB = "smb"
-    SMB_ENCRYPTED = "smb-encrypted"
-    LOCAL_FILE_ACCESS = "local-file-access"
-    NRPE = "nrpe"
-    XMPP = "xmpp"
-    IIOP = "iiop"
-    IIOP_ENCRYPTED = "iiop-encrypted"
-    JRMP = "jrmp"
-    JRMP_ENCRYPTED = "jrmp-encrypted"
-    IN_PROCESS_LIBRARY_CALL = "in-process-library-call"
-    CONTAINER_SPAWNING = "container-spawning"
-
-    def __str__(self) -> str:
-        return str(self.value)
-
-
-class Authentication(Enum):
-    NONE = "none",
-    CREDENTIALS = "credentials"
-    SESSION_ID = "session-id"
-    TOKEN = "token"
-    CLIENT_CERTIFICATE = "client-certificate"
-    TWO_FACTOR = "two-factor"
-    EXTERNALIZED = "externalized"
-
-    def __str__(self) -> str:
-        return str(self.value)
-
-
-class Authorization(Enum):
-    NONE = "none"
-    TECHNICAL_USER = "technical-user"
-    ENDUSER_IDENTITY_PROPAGATION = "enduser-identity-propagation"
-
-    def __str__(self) -> str:
-        return str(self.value)
-
-
-class DataFlow(Element):
-    """Data movement between processes, data stores, and external entities"""
-
-    def __init__(self, scope: Construct, name: str,
-                 source: "TechnicalAsset",
-                 sink: "TechnicalAsset",
-                 protocol: Protocol,
-                 vpn: bool = False,
-                 authentication: Authentication = Authentication.NONE,
-                 authorization: Authorization = Authorization.NONE,
-                 ):
-        super().__init__(scope, name)
-
-        self.source = source
-        self.sink = sink
-        self.protocol = protocol
-        self.vpn = vpn
-        self.authentication = authentication
-        self.authorization = authorization
-
-        self._data_sent: Set["Data"] = set()
-        self._data_received: Set["Data"] = set()
-
-    def sends(self, *data: Data) -> None:
-        for item in data:
-            self._data_sent.add(item)
-            self._update_partipants(item)
-
-    def receives(self, *data: Data) -> None:
-        for item in data:
-            self._data_received.add(item)
-            self._update_partipants(item)
-
-    @property
-    def data_sent(self) -> Set["Data"]:
-        return self._data_sent
-
-    @property
-    def data_received(self) -> Set["Data"]:
-        return self._data_received
-
-    def _update_partipants(self, data: Data) -> None:
-        self.source.processes(data)
-        self.sink.processes(data)
-
-    def is_relational_database_protocol(self) -> bool:
-        return self.protocol in [
-            Protocol.JDBC,
-            Protocol.ODBC,
-            Protocol.SQL_ACCESS_PROTOCOL,
-            Protocol.JDBC_ENCRYPTED,
-            Protocol.ODBC_ENCRYPTED,
-            Protocol.SQL_ACCESS_PROTOCOL_ENCRYPTED,
-        ]
-
-    def is_nosql_database_protocol(self) -> bool:
-        return self.protocol in [
-            Protocol.NOSQL_ACCESS_PROTOCOL,
-            Protocol.NOSQL_ACCESS_PROTOCOL_ENCRYPTED,
-        ]
-
-    def is_encrypted(self) -> bool:
-        return self.vpn or self.protocol in [
-            Protocol.HTTPS,
-            Protocol.WSS,
-            Protocol.JDBC_ENCRYPTED,
-            Protocol.ODBC_ENCRYPTED,
-            Protocol.NOSQL_ACCESS_PROTOCOL_ENCRYPTED,
-            Protocol.SQL_ACCESS_PROTOCOL_ENCRYPTED,
-            Protocol.BINARY_ENCRYPTED,
-            Protocol.TEXT_ENCRYPTED,
-            Protocol.SSH,
-            Protocol.SSH_TUNNEL,
-            Protocol.FTPS,
-            Protocol.SCP,
-            Protocol.LDAPS,
-            Protocol.REVERSE_PROXY_WEB_PROTOCOL_ENCRYPTED,
-            Protocol.IIOP_ENCRYPTED,
-            Protocol.JRMP_ENCRYPTED,
-            Protocol.SMB_ENCRYPTED,
-            Protocol.SMTP_ENCRYPTED,
-            Protocol.POP3_ENCRYPTED,
-            Protocol.IMAP_ENCRYPTED,
-        ]
-
-    def is_bidirectional(self) -> bool:
-        return len(self._data_sent) > 0 and len(self._data_received) > 0
 
 
 class TechnicalAssetType(Enum):
@@ -498,14 +307,14 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
         self.custom_developed_parts = custom_developed_parts
         self.accept_data_formats = accept_data_formats
 
-        self._data_assets_processed: Set[Data] = set()
-        self._data_assets_stored: Set[Data] = set()
+        self._data_assets_processed: Set["Data"] = set()
+        self._data_assets_stored: Set["Data"] = set()
 
-    def processes(self, *data: Data) -> None:
+    def processes(self, *data: "Data") -> None:
         for item in data:
             self._data_assets_processed.add(item)
 
-    def stores(self, *data: Data, no_process: bool = False) -> None:
+    def stores(self, *data: "Data", no_process: bool = False) -> None:
         for item in data:
             self._data_assets_stored.add(item)
             if not no_process:
@@ -548,5 +357,3 @@ class DataStore(TechnicalAsset):
 
     def __init__(self, scope: Construct, name: str, **kwargs: Any):
         super().__init__(scope, name, TechnicalAssetType.DATASTORE, **kwargs)
-
-
