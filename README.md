@@ -21,7 +21,7 @@ model = tm.Model("REST Login Model")
 
 user = tm_plus.Browser(model, "User")
 
-login_process = tm.Process(
+web_api = tm.Process(
     model,
     "WebApi",
     machine=tm.Machine.VIRTUAL,
@@ -32,7 +32,7 @@ login = tm.DataFlow(
     model,
     "Login",
     user,
-    login_process,
+    web_api,
     protocol=tm.Protocol.HTTPS,
 )
 
@@ -49,7 +49,7 @@ database = tm.DataStore(
 authenticate= tm.DataFlow(
     model,
     "Authenticate",
-    login_process,
+    web_api,
     database ,
     protocol=tm.Protocol.SQL_ACCESS_PROTOCOL,
 )
