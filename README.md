@@ -80,10 +80,9 @@ Output:
 ```python
 result = model.evaluate()
 
-with open("example.pu","w+") as f:
-    f.write(result.sequence_diagram())
+result.data_flow_diagram()
 ```
-![threatbook.png](https://github.com/hupe1980/threatmodel/raw/main/.assets/sequence-diagram.png)
+![threatbook.png](https://github.com/hupe1980/threatmodel/raw/main/.assets/data-flow-diagram.png)
 
 ## High level elements (threatmodel/plus*)
 ```python
