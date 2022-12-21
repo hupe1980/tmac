@@ -1,13 +1,9 @@
 from typing import Optional
 
-from ..threatmodel import (
-    AttackCategory,
+from ..risk import Likelihood, Impact, Risk
+from ..threat import AttackCategory,  Threat, Threatlib
+from ..model import (
     Element,
-    Risk,
-    Threat,
-    Threatlib,
-    Likelihood,
-    Impact,
     Controls,
     Process,
     Authentication,

@@ -1,29 +1,23 @@
+from .risk import Likelihood, Severity, Impact, Treatment, Risk
 from .table_format import TableFormat
-from .threatmodel import (
-    AttackCategory, 
-    Data, 
+from .threat import AttackCategory, Threat, Threatlib
+from .model import (
+    Data,
     Protocol,
-    Authentication, 
+    Authentication,
     Authorization,
-    DataFlow, 
-    Model, 
+    DataFlow,
+    Model,
     Element,
-    Likelihood, 
-    Severity, 
-    Impact,
-    Treatment, 
-    Risk,
-    Controls, 
-    Machine, 
+    Controls,
+    Machine,
     Technology,
-    DataFormat, 
-    TechnicalAsset, 
-    ExternalEntity, 
-    Process, 
+    DataFormat,
+    TechnicalAsset,
+    ExternalEntity,
+    Process,
     DataStore,
-    Result, 
-    Threat, 
-    Threatlib,
+    Result,
 )
 from .threatlib import DEFAULT_THREATLIB
 
@@ -32,7 +26,7 @@ __all__ = (
     "AttackCategory",
     "Data",
     "Protocol",
-    "Authentication", 
+    "Authentication",
     "Authorization",
     "DataFlow",
     "Element",

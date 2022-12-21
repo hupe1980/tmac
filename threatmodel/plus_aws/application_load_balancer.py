@@ -1,7 +1,7 @@
 from typing import Any
 
 from ..node import Construct
-from ..threatmodel import Process, Machine, Encryption, Technology, Controls
+from ..model import Process, Machine, Encryption, Technology, Controls
 
 
 class ApplicationLoadBalancer(Process):
