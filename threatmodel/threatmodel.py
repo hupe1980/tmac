@@ -5,6 +5,7 @@ import uuid
 from tabulate import tabulate
 
 from .node import Construct
+from .diagram import SequenceDiagram
 from .table_format import TableFormat
 
 
@@ -85,7 +86,8 @@ class Severity(Enum):
 class Treatment(Enum):
     UNCHECKED = "unchecked"
     IN_DISCUSSION = "in-discussion"
-    REDUCED = "reduced"
+    IN_PROGRESS = "in-progress",
+    MITIGATED= "mitigated"
     TRANSFERRED = "transferred"
     AVOIDED = "avoided"
     ACCEPTED = "accepted"
@@ -147,7 +149,7 @@ class Risk:
         )
 
     def __str__(self) -> str:
-        return f"'{self.target}': {self.name}\n{self.description}\n{self.severity}"
+        return f"'{self.id}': {self.name}\n{self.description}\n{self.severity}"
 
 
 class Element(Construct):
@@ -236,36 +238,29 @@ class Result:
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
     def sequence_diagram(self) -> str:
-        participants: List[str] = list()
-        messages: List[str] = list()
+        diagram = SequenceDiagram(self.model_title)
 
         for e in self._elements:
             if isinstance(e, DataFlow):
                 for data in e.data_sent:
-                    messages.append(f"{e.source.uniq_name} -> {e.sink.uniq_name}: {data.name}")
+                    diagram.add_message(e.source.uniq_name, e.sink.uniq_name, data.name)
                 for data in e.data_received:
-                    messages.append(f"{e.sink.uniq_name} -> {e.source.uniq_name}: {data.name}")
+                    diagram.add_message(e.sink.uniq_name, e.source.uniq_name, data.name)
                 continue
 
             if isinstance(e, ExternalEntity):
-                participants.append(f'actor {e.uniq_name} as "{e.name}"')
+                diagram.add_actor(e.uniq_name, e.name)
                 continue
 
             if isinstance(e, DataStore):
-                participants.append(f'database {e.uniq_name} as "{e.name}"')
+                diagram.add_database(e.uniq_name, e.name)
                 continue
 
             if isinstance(e, TechnicalAsset):
-                participants.append(f'entity {e.uniq_name} as "{e.name}"')
+                diagram.add_entity(e.uniq_name, e.name)
                 continue
 
-        template = """@startuml {title}
-{participants}
-{messages}
-@enduml"""
-
-        return template.format(title=self.model_title, participants="\n".join(participants), messages="\n".join(messages))
-
+        return diagram.render()
 
 class TrustBoundary(Element):
     """Trust zone changes as data flows through the system."""
