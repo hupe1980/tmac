@@ -2,7 +2,8 @@ from typing import Optional, TYPE_CHECKING
 from enum import Enum
 
 if TYPE_CHECKING:
-    from .model import Element, Threat
+    from .element import Element
+    from .threat import Threat
 
 class Impact(Enum):
     LOW = "low"
@@ -58,6 +59,8 @@ class Risk:
         self.description = threat.description
         self.impact = impact
         self.likelihood = likelihood
+        self.prerequisites = threat.prerequisites
+        self.mitigations = threat.mitigations
 
         if fix_severity is None:
             self.severity = self._calculate_severity(impact, likelihood)

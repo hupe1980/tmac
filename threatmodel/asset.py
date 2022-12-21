@@ -1,15 +1,12 @@
 from abc import ABCMeta
-from typing import Dict, List, Any, Optional, Set, TYPE_CHECKING
+from typing import List, Any, Set, TYPE_CHECKING
 from enum import Enum
 
 from .node import Construct
 from .element import Element
 
 if TYPE_CHECKING:
-    from .control import Control
     from .data_flow import Data
-    from .threat import Threatlib
-    from .trust_boundary import TrustBoundary
 
 class TechnicalAssetType(Enum):
     EXTERNAL_ENTITY = "external-entity"
@@ -79,7 +76,7 @@ class Technology(Enum):
     AI = "ai"
     MAIL_SERVER = "mail-server"
     VAULT = "vault"
-    HASM = "hsm"
+    HSM = "hsm"
     WAF = "waf"
     IDS = "ids"
     IPS = "ips"

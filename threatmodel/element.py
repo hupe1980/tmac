@@ -26,6 +26,7 @@ class Element(Construct):
 
     @property
     def risks(self) -> List["Risk"]:
+        # import when need to avoid circular import
         from .model import Model
         threatlib = Model.of(self).threatlib
         return threatlib.apply(self)

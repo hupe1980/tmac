@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple, Any, Optional, TYPE_CHECKING
+from collections.abc import MutableMapping
+from typing import Dict, List, Tuple, Any, Optional, Iterator, TYPE_CHECKING
 from enum import Enum
 
 if TYPE_CHECKING:
     from .risk import Risk
-    from .model import Element
+    from .element import Element
 
 class AttackCategory(Enum):
     ENGAGE_IN_DECEPTIVE_INTERACTIONS = "Engage in Deceptive Interactions"
@@ -87,22 +88,37 @@ class Threat(ABC):
     def apply(self, target: "Element") -> Optional["Risk"]:
         pass
 
+    def __str__(self) -> str:
+        prerequisites = "\n".join(["- " + p for p in self.prerequisites])
+        mitigations = "\n".join(["- " + m for m in self.mitigations])
+        
+        return f"""{self.id}: {self.name}
 
-class Threatlib:
+Description:
+{self.description}
+
+Prerequisites:
+{prerequisites}
+
+Mitigations:
+{mitigations}
+"""
+
+class Threatlib(MutableMapping[str, Threat]):
     """Represents a threat library"""
 
     def __init__(self) -> None:
-        self.lib: Dict[str, "Threat"] = dict()
-        self.excludes: List[str] = list()
+        self.excludes: List[str] = list() # TODO
+        self._lib: Dict[str, "Threat"] = dict()
 
     def add_threats(self, *threats: "Threat") -> None:
         for threat in threats:
-            self.lib[threat.id] = threat
+            self._lib[threat.id] = threat
 
     def apply(self, target: "Element") -> List["Risk"]:
         risks: List["Risk"] = list()
 
-        for item in self.lib.values():
+        for item in self.values():
             if item.id in self.excludes:
                 continue
 
@@ -112,3 +128,18 @@ class Threatlib:
                     risks.append(risk)
 
         return risks
+
+    def __getitem__(self, id: str) -> Threat:
+        return self._lib[id]
+
+    def __setitem__(self, id: str, value: Threat) -> None:
+        self._lib[id] = value
+
+    def __delitem__(self, id: str) -> None:
+        del self._lib[id]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._lib)
+    
+    def __len__(self) -> int:
+        return len(self._lib)

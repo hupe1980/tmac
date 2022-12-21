@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, TYPE_CHECKING
+from typing import Dict, List, Optional, TYPE_CHECKING, cast
 from tabulate import tabulate
 
 from .asset import ExternalEntity, DataStore, TechnicalAsset
@@ -11,7 +11,7 @@ from .table_format import TableFormat
 from .threatlib import DEFAULT_THREATLIB
 
 if TYPE_CHECKING:
-    from .threat import Threatlib
+    from .threat import Threat, Threatlib
 
 
 class Model(Construct):
@@ -41,11 +41,11 @@ class Model(Construct):
             self.threatlib = threatlib
 
     @property
-    def technical_assets(self):
-        return list(filter(lambda c: isinstance(c, TechnicalAsset), self.node.find_all()))
+    def technical_assets(self)-> List["TechnicalAsset"]:
+        return cast(List["TechnicalAsset"], list(filter(lambda c: isinstance(c, TechnicalAsset), self.node.find_all())))
 
     def evaluate(self) -> "Result":
-        result = Result(self.title)
+        result = Result(self)
 
         for c in self.node.find_all():
             if isinstance(c, Element):
@@ -56,8 +56,8 @@ class Model(Construct):
 
 
 class Result:
-    def __init__(self, model_title: str) -> None:
-        self.model_title = model_title
+    def __init__(self, model: Model) -> None:
+        self._model = model
         self._risks: Dict[str, Risk] = dict()
         self._elements: List[Element] = list()
 
@@ -69,8 +69,16 @@ class Result:
         for element in elements:
             self._elements.append(element)
 
+    @property
+    def technical_assets(self)-> List["TechnicalAsset"]:
+        return cast(List["TechnicalAsset"], list(filter(lambda c: isinstance(c, TechnicalAsset), self._elements)))
+    
+    @property
     def risks(self) -> List[Risk]:
         return list(self._risks.values())
+
+    def get_threat_by_id(self, id: str) -> Optional["Threat"]:
+        return self._model.threatlib.get(id)
 
     def get_risk_by_id(self, id: str) -> Risk:
         return self._risks[id]
@@ -89,7 +97,7 @@ class Result:
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
     def sequence_diagram(self) -> str:
-        diagram = SequenceDiagram(self.model_title)
+        diagram = SequenceDiagram(self._model.title)
 
         for e in self._elements:
             if isinstance(e, DataFlow):

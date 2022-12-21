@@ -7,6 +7,8 @@ from ..risk import Likelihood, Impact, Risk
 from ..threat import AttackCategory,  Threat, Threatlib
 from ..element import Element
 
+# See https://capec.mitre.org/data/definitions/2000.html
+
 
 class CAPEC_10(Threat):
     def __init__(self) -> None:
@@ -35,7 +37,7 @@ class CAPEC_10(Threat):
         if not isinstance(target, Process):
             return None
 
-        if target.environment_variables is True and target.has_control(Control.INPUT_SANITIZING) is False and target.has_control(Control.INPUT_BOUNDS_CHECKS) is False:
+        if target.environment_variables is True and target.has_control(Control.INPUT_SANITIZING) is False and target.has_control(Control.BOUNDS_CHECKING) is False:
             return Risk(target, self, Impact.HIGH, Likelihood.VERY_LIKELY)
 
         return None
@@ -68,8 +70,12 @@ class CAPEC_66(Threat):
         if not target.is_relational_database_protocol():
             return None
 
-        if target.source.has_control(Control.INPUT_SANITIZING) is False and target.source.has_control(Control.INPUT_VALIDATION) is False and target.source.has_control(Control.Parameterization) is False:
-            return Risk(target.source, self, Impact.HIGH, Likelihood.LIKELY)
+        if target.source.has_control(Control.INPUT_SANITIZING) is False and target.source.has_control(Control.INPUT_VALIDATION) is False and target.source.has_control(Control.PARAMETERIZATION) is False:
+            likelihood = Likelihood.LIKELY
+            if target.source.has_control(Control.WAF):
+                likelihood = Likelihood.UNLIKELY # WAF Bypass
+
+            return Risk(target.source, self, Impact.HIGH, likelihood)
 
         return None
 
@@ -102,7 +108,7 @@ class CAPEC_100(Threat):
         if not isinstance(target, Process):
             return None
 
-        if not target.has_control(Control.INPUT_BOUNDS_CHECKS):
+        if not target.has_control(Control.BOUNDS_CHECKING):
             return Risk(target, self, Impact.VERY_HIGH, Likelihood.VERY_LIKELY)
 
         return None
@@ -132,7 +138,7 @@ class CAPEC_101(Threat):
         if not isinstance(target, Process):
             return None
 
-        if target.has_control(Control.SERVER_SIDE_INCLUDES_DEACTIVATION) or target.has_control(Control.INPUT_SANITIZING):
+        if target.has_control(Control.AVOID_SERVER_SIDE_INCLUDES) or target.has_control(Control.INPUT_SANITIZING):
             return None
 
         if target.is_web_application():

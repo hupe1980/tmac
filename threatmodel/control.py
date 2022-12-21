@@ -1,18 +1,31 @@
 from enum import Enum
 
+
+class classproperty(object):
+    def __init__(self, f):
+        self.f = f
+    def __get__(self, obj, owner):
+        return self.f(owner)
+
 class Control(Enum):
     """Controls implemented by/on and Element"""
 
-    INPUT_BOUNDS_CHECKS = "input-bounds-checks"
+    @classproperty
+    def list(cls):
+        return list(map(lambda c: f"{c.name}: {c.value}", cls)) # type: ignore
 
-    INPUT_SANITIZING = "input-sanitizing"
+    BOUNDS_CHECKING = "Bounds Checking"
 
-    INPUT_VALIDATION = "input-validation"
+    INPUT_SANITIZING = "Input Sanitizing"
 
-    Parameterization = "parameterization"
+    INPUT_VALIDATION = "Input Validation"
+
+    PARAMETERIZATION = "Parameterization"
     """Parameterized queries or stored procedures"""
 
-    SERVER_SIDE_INCLUDES_DEACTIVATION = "server-side-includes-deactivation"
+    AVOID_SERVER_SIDE_INCLUDES = "Avoid Server-Side Includes (SSI)"
+
+    AVOID_USING_COMMAND_INTERPRETERS = "Avoid Using Command Interpreters"
 
     WAF = "waf"
 
