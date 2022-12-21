@@ -1,5 +1,5 @@
-from abc import ABCMeta
-from typing import List, Any, Set, TYPE_CHECKING
+from abc import ABCMeta, abstractproperty
+from typing import List, Any, Set, Dict, TYPE_CHECKING
 from enum import Enum
 
 from .node import Construct
@@ -124,6 +124,7 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
                  redundant: bool = False,
                  custom_developed_parts: bool = False,
                  accept_data_formats: List[DataFormat] = [],
+                 overwrite_node_attrs: Dict[str, str] = dict(),
                  ):
         super().__init__(scope, name)
 
@@ -137,6 +138,7 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
         self.redundant = redundant
         self.custom_developed_parts = custom_developed_parts
         self.accept_data_formats = accept_data_formats
+        self.overwrite_node_attrs = overwrite_node_attrs
 
         self._uses_environment_variables = uses_environment_variables
         self._data_assets_processed: Set["Data"] = set()
@@ -172,12 +174,20 @@ class TechnicalAsset(Element, metaclass=ABCMeta):
             Technology.WEB_SERVICE_SOAP,
         ]
 
+    @abstractproperty
+    def shape(self) -> str:
+        pass
+
 
 class ExternalEntity(TechnicalAsset):
     """Task, entity, or data store outside of your direct control."""
 
     def __init__(self, scope: Construct, name: str, **kwargs: Any):
         super().__init__(scope, name, TechnicalAssetType.EXTERNAL_ENTITY, **kwargs)
+    
+    @property
+    def shape(self) -> str:
+        return "box"
 
 
 class Process(TechnicalAsset):
@@ -186,9 +196,17 @@ class Process(TechnicalAsset):
     def __init__(self, scope: Construct, name: str, **kwargs: Any):
         super().__init__(scope, name, TechnicalAssetType.PROCESS, **kwargs)
 
+    @property
+    def shape(self) -> str:
+        return "circle"
+
 
 class DataStore(TechnicalAsset):
     """Permanent and temporary data storage."""
 
     def __init__(self, scope: Construct, name: str, **kwargs: Any):
         super().__init__(scope, name, TechnicalAssetType.DATASTORE, **kwargs)
+
+    @property
+    def shape(self) -> str:
+        return "cylinder"

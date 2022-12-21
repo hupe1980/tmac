@@ -1,7 +1,8 @@
-from typing import Set, TYPE_CHECKING
+from typing import Set, Dict, TYPE_CHECKING
 from enum import Enum
 
 from .common import OrderedEnum
+from .diagram import DataFlowDiagram
 from .node import Construct
 from .element import Element
 
@@ -137,6 +138,7 @@ class DataFlow(Element):
                  vpn: bool = False,
                  authentication: Authentication = Authentication.NONE,
                  authorization: Authorization = Authorization.NONE,
+                 overwrite_edge_attrs: Dict[str, str] = dict()
                  ):
         super().__init__(scope, name)
 
@@ -146,6 +148,7 @@ class DataFlow(Element):
         self.vpn = vpn
         self.authentication = authentication
         self.authorization = authorization
+        self.overwrite_edge_attrs = overwrite_edge_attrs
 
         self._data_sent: Set["Data"] = set()
         self._data_received: Set["Data"] = set()
@@ -213,4 +216,21 @@ class DataFlow(Element):
 
     def is_bidirectional(self) -> bool:
         return len(self._data_sent) > 0 and len(self._data_received) > 0
+
+    def data_flow_diagram(self, auto_view = True):
+        diagram = DataFlowDiagram(self.name)
+
+        diagram.add_data_flow(self.source.uniq_name, self.sink.uniq_name, f"{self.protocol}: {self.name}", **self.overwrite_edge_attrs)
+        diagram.add_asset(self.source.uniq_name, self.source.name, self.source.shape, **self.source.overwrite_node_attrs)
+        diagram.add_asset(self.sink.uniq_name, self.sink.name, self.sink.shape, **self.sink.overwrite_node_attrs)
+
+        if auto_view is False or self._model.is_ci():
+            diagram.save()
+            return
+
+        if self._model.is_notebook():
+            from IPython import display
+            display.display(diagram)
+        else:
+            diagram.view()
 

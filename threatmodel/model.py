@@ -4,6 +4,7 @@ from tabulate import tabulate
 from .asset import TechnicalAsset
 from .element import Element
 from .node import Construct
+from .data_flow import DataFlow
 from .common import is_notebook, is_ci
 from .diagram import DataFlowDiagram
 from .table_format import TableFormat
@@ -44,6 +45,10 @@ class Model(Construct):
     def technical_assets(self) -> List["TechnicalAsset"]:
         return cast(List["TechnicalAsset"], list(filter(lambda c: isinstance(c, TechnicalAsset), self.node.find_all())))
 
+    @property
+    def data_flows(self) -> List["DataFlow"]:
+        return cast(List["DataFlow"], list(filter(lambda c: isinstance(c, DataFlow), self.node.find_all())))
+    
     def evaluate(self) -> "Result":
         result = Result(self)
 
@@ -80,6 +85,10 @@ class Result:
         return cast(List["TechnicalAsset"], list(filter(lambda c: isinstance(c, TechnicalAsset), self._elements)))
 
     @property
+    def data_flows(self) -> List["DataFlow"]:
+        return cast(List["DataFlow"], list(filter(lambda c: isinstance(c, DataFlow), self._elements)))
+
+    @property
     def risks(self) -> List["Risk"]:
         return list(self._risks.values())
 
@@ -103,7 +112,14 @@ class Result:
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
     def data_flow_diagram(self, auto_view = True):
-        diagram = DataFlowDiagram(self._model.title, self._elements)
+        diagram = DataFlowDiagram(self._model.title)
+
+        for e in self._elements:
+            if isinstance(e, DataFlow):
+                diagram.add_data_flow(e.source.uniq_name, e.sink.uniq_name, f"{e.protocol}: {e.name}", **e.overwrite_edge_attrs)
+                continue
+            if isinstance(e, TechnicalAsset):
+                diagram.add_asset(e.uniq_name, e.name, e.shape, **e.overwrite_node_attrs)
 
         if auto_view is False or self._model.is_ci():
             diagram.save()

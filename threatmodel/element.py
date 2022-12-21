@@ -24,11 +24,13 @@ class Element(Construct):
 
         self._controls: Set["Control"] = set()
 
-    @property
-    def risks(self) -> List["Risk"]:
         # import when need to avoid circular import
         from .model import Model
-        threatlib = Model.of(self).threatlib
+        self._model = Model.of(self)
+
+    @property
+    def risks(self) -> List["Risk"]:
+        threatlib = self._model.threatlib
         return threatlib.apply(self)
 
     @property
