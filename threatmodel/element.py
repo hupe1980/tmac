@@ -5,7 +5,6 @@ from tabulate import tabulate
 from .node import Construct
 from .risk import Risk
 from .table_format import TableFormat
-from .util import issublist
 
 if TYPE_CHECKING:
     from .control import Control
