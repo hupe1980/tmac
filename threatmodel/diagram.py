@@ -21,12 +21,12 @@ class DataFlowDiagram(graphviz.Digraph):
                   )
 
         self.attr("edge",
-            shape="none",
-            fontname="Arial",
-            fontsize="8",
-            arrowhead="normal",
-            arrowsize="0.5",
-        )
+                  shape="none",
+                  fontname="Arial",
+                  fontsize="8",
+                  arrowhead="normal",
+                  arrowsize="0.5",
+                  )
 
     def add_data_flow(self, tail_name: str, head_name: str, label: str, **overwrites: str) -> None:
         self.edge(tail_name, head_name, label, **overwrites)

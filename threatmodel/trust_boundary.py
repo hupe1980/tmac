@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 from .node import Construct
-from .model import Element
+from .element import Element
 
 if TYPE_CHECKING:
     pass

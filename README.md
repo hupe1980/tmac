@@ -17,22 +17,22 @@ python3 threatmodel.py
 import threatmodel as tm
 import threatmodel.plus as tm_plus
 
-model = tm.Model("REST Login Model")
+model = tm.Model("Login Model")
 
 user = tm_plus.Browser(model, "User")
 
-web_api = tm.Process(
+web_server = tm.Process(
     model,
-    "WebApi",
+    "WebServer",
     machine=tm.Machine.VIRTUAL,
-    technology=tm.Technology.WEB_SERVICE_REST,
+    technology=tm.Technology.WEB_WEB_APPLICATION,
 )
 
 login = tm.DataFlow(
     model,
     "Login",
     user,
-    web_api,
+    web_server,
     protocol=tm.Protocol.HTTPS,
 )
 
@@ -49,7 +49,7 @@ database = tm.DataStore(
 authenticate= tm.DataFlow(
     model,
     "Authenticate",
-    web_api,
+    web_server,
     database ,
     protocol=tm.Protocol.SQL,
 )
@@ -62,10 +62,13 @@ result = model.evaluate()
 print(result.risks_table(table_format=tm.TableFormat.GITHUB))
 ```
 Output:
-| SID              | Severity   | Category                   | Name             | Affected   | Treatment   |
-|------------------|-------------|----------------------------|------------------|------------|-------------|
-| CAPEC-100@WebApi | high        | Manipulate Data Structures | Overflow Buffers | WebApi     | unchecked   |
-| CAPEC-66@WebApi  | elevated    | Inject Unexpected Items    | SQL Injection    | WebApi     | unchecked   |
+| SID                 | Severity   | Category                   | Name                                | Affected   | Treatment   |
+|---------------------|------------|----------------------------|-------------------------------------|------------|-------------|
+| CAPEC-63@WebServer  | elevated   | Inject Unexpected Items    | Cross-Site Scripting (XSS)          | WebServer  | mitigated   |
+| CAPEC-100@WebServer | high       | Manipulate Data Structures | Overflow Buffers                    | WebServer  | unchecked   |
+| CAPEC-101@WebServer | elevated   | Inject Unexpected Items    | Server Side Include (SSI) Injection | WebServer  | mitigated   |
+| CAPEC-62@WebServer  | high       | Subvert Access Control     | Cross Site Request Forgery          | WebServer  | unchecked   |
+| CAPEC-66@WebServer  | elevated   | Inject Unexpected Items    | SQL Injection                       | WebServer  | unchecked   |
 |...|...|...|...|...|...|
 
 ## Jupyter Threatbook

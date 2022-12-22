@@ -1,5 +1,6 @@
 from .threatlib import DEFAULT_THREATLIB
-from .model import Model, Element,Result
+from .element import Element
+from .model import Model, Result
 from .trust_boundary import TrustBoundary
 from .threat import AttackCategory, Threat, Threatlib
 from .table_format import TableFormat
