@@ -38,6 +38,18 @@ class OpenThreatModelAsset(BaseOpenThreatModel):
         self.description = description
         self.attributes = attributes
 
+class OpenThreatModelComponent(BaseOpenThreatModel):
+    def __init__(self, id: str, name: str, type: str,
+                 tags: List[str] = list(),
+                 description: str = "",
+                 attributes: Dict[str, str] = dict(),
+                 ):
+        self.id = id
+        self.name = name
+        self.type = type
+        self.tags = set(tags)
+        self.description = description
+        self.attributes = attributes
 
 class OpenThreatModelThreatInstance(BaseOpenThreatModel):
     def __init__(self, threat: str, state: str) -> None:
@@ -72,6 +84,21 @@ class OpenThreatModelDataFlow(BaseOpenThreatModel):
         self.attributes = attributes
 
 
+class OpenThreatModelThreat(BaseOpenThreatModel):
+     def __init__(self, id: str, name: str,
+                 description: str = "",
+                 categories: List[str] = list(),
+                 cwes: List[str] = list(),
+                 attributes: Dict[str, str] = dict(),
+                 ):
+        self.id = id
+        self.name = name
+        self.description = description
+        self.categories = set(categories)
+        self.cwes = set(cwes)
+        self.attributes = attributes
+
+
 class OpenThreatModelMitigation(BaseOpenThreatModel):
      def __init__(self, id: str, name: str,
                  description: str = "",
@@ -88,9 +115,11 @@ class OpenThreatModelMitigation(BaseOpenThreatModel):
 class OpenThreatModel(BaseOpenThreatModel):
     def __init__(self, project: "OpenThreatModelProject",
                  assets: List["OpenThreatModelAsset"] = list(),
+                 components: List["OpenThreatModelComponent"] = list(),
                  data_flows: List["OpenThreatModelDataFlow"] = list(),
                  ):
         self.otmVersion = "0.1.0"
         self.project = project
         self.assets = set(assets)
+        self.components = set(components)
         self.dataflows = set(data_flows)

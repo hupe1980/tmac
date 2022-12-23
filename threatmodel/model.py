@@ -4,7 +4,7 @@ from tabulate import tabulate
 from .asset import Asset
 from .component import Component
 from .element import Element
-from .mitigation import Mitigation
+from .mitigation import Mitigation, Accept, FalsePositive, Transfer
 from .node import Construct, TagMixin
 from .data_flow import DataFlow
 from .common import is_notebook, is_ci
@@ -33,7 +33,13 @@ class Model(Construct, TagMixin):
 
         return lookup(construct)
 
-    def __init__(self, name: str, description: str = "", owner: str = "", owner_contact: str = "", threatlib: Optional["Threatlib"] = None) -> None:
+    def __init__(self, name: str,
+                 description: str = "",
+                 owner: str = "",
+                 owner_contact: str = "",
+                 auto_evaluate: bool = True,
+                 threatlib: Optional["Threatlib"] = None,
+                 ) -> None:
         super().__init__(None, name)
 
         self.description = description
@@ -45,6 +51,7 @@ class Model(Construct, TagMixin):
         else:
             self.threatlib = threatlib
 
+        self._auto_evaluate = auto_evaluate
         self._risks: Dict[str, "Risk"] = dict()
 
     @property
@@ -64,12 +71,21 @@ class Model(Construct, TagMixin):
         return cast(List["Mitigation"], list(filter(lambda c: isinstance(c, Mitigation), self.node.find_all())))
 
     @property
+    def risks(self) -> List["Risk"]:
+        if self._auto_evaluate:
+            self.evaluate_risks()
+
+        return list(self._risks.values())
+
+    @property
     def otm(self) -> "OpenThreatModel":
         return OpenThreatModel(
             project=OpenThreatModelProject(
                 name=self.name,
                 id=self.id
             ),
+            assets=[a.otm for a in self.assets],
+            components=[c.otm for c in self.components],
             data_flows=[df.otm for df in self.data_flows],
         )
 
@@ -85,37 +101,50 @@ class Model(Construct, TagMixin):
     def get_risk_by_id(self, id: str) -> "Risk":
         return self._risks[id]
 
-    def treat_risk(self, id: str, treatment: "Treatment") -> None:
-        self._risks[id].treat(treatment)
+    def accept_risk(self, id: str) -> None:
+        accept = Accept(self)
+        accept.treats(self.get_risk_by_id(id))
+
+    def ignore_risk(self,id: str) -> None:
+        ignore = FalsePositive(self)
+        ignore.treats(self.get_risk_by_id(id))
+
+    def transfer_risk(self,id: str) -> None:
+        transfer = Transfer(self)
+        transfer.treats(self.get_risk_by_id(id))
+
+    def mitigate_risk(self, id: str, mitigation: Mitigation) -> None:
+        mitigation.treats(self.get_risk_by_id(id))
 
     def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
         headers = ["SID", "Severity", "Category",
                    "Name", "Affected", "Treatment"]
         table = []
-        for risk in self._risks.values():
+        for risk in self.risks:
             table.append([risk.id, risk.severity, risk.category, risk.name,
                          risk.target, risk.treatment])
 
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
-    def data_flow_diagram(self, auto_view=True):
-        diagram = DataFlowDiagram(self.name)
+    def data_flow_diagram(self, auto_view: bool = True, hide_data_flow_labels: bool = False) -> None:
+        diagram = DataFlowDiagram(self.name,
+                                  hide_data_flow_labels=hide_data_flow_labels,
+                                  )
 
         for df in self.data_flows:
-                diagram.add_data_flow(
-                    df.source.id, 
-                    df.destination.id, 
-                    f"{df.protocol}: {df.name}", 
-                    **df.overwrite_edge_attrs,
-                )
-        
-        for c in self.components:    
-                diagram.add_asset(
-                    c.id, 
-                    c.name, 
-                    c.shape, 
-                    **c.overwrite_node_attrs,
-        )
+            diagram.add_data_flow(df.source.id, df.destination.id,
+                                  label=f"{df.protocol}: {df.name}",
+                                  bidirectional=df.bidirectional,
+                                  **df.overwrite_edge_attrs,
+                                  )
+
+        for c in self.components:
+            diagram.add_asset(
+                c.id,
+                c.name,
+                c.shape,
+                **c.overwrite_node_attrs,
+            )
 
         if auto_view is False or self.is_ci():
             diagram.save()
@@ -130,12 +159,13 @@ class Model(Construct, TagMixin):
         else:
             diagram.view()
 
-    def evaluate(self) -> None:
+    def evaluate_risks(self) -> None:
+        self._risks = dict()
+        mitigations = self.mitigations
+
         for c in self.node.find_all():
             if isinstance(c, Element):
-                self._add_risk(*c.risks)
-
-    def _add_risk(self, *risks: "Risk") -> None:
-        for risk in risks:
-            self._risks[risk.id] = risk
-
+                for risk in c.risks:
+                    risk.add_mitigations(
+                        *[m for m in mitigations if m.is_applicable(risk.id)])
+                    self._risks[risk.id] = risk

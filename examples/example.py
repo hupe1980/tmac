@@ -18,7 +18,6 @@ web_server = tm.Process(
     machine=tm.Machine.VIRTUAL,
     technology=tm.Technology.WEB_APPLICATION,
 )
-web_server.add_controls(tm.Control.INPUT_VALIDATION, tm.Control.INPUT_SANITIZING)
 
 login = tm.DataFlow(
     model,
@@ -47,11 +46,13 @@ authenticate= tm.DataFlow(
 
 authenticate.transfers(tm.Data("AuthenticateQuery"))
 
-model.evaluate()
+print(model.risks_table(table_format=tm.TableFormat.GITHUB))
+
+model.mitigate_risk("CAPEC-100@WebServer", tm.Mitigation(model, "DEMO"))
 
 print(model.risks_table(table_format=tm.TableFormat.GITHUB))
 
 model.data_flow_diagram(auto_view=False)
 
-print(model.otm)
+# print(model.otm)
 

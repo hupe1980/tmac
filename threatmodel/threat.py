@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from collections.abc import MutableMapping
-from typing import Dict, List, Tuple, Any, Optional, Iterator, Callable, TYPE_CHECKING
+from typing import Dict, List, Set, Tuple, Any, Optional, Iterator, Callable, TYPE_CHECKING
 from enum import Enum
 
+from .mitigation import Mitigation, Accept, FalsePositive
+
 if TYPE_CHECKING:
-    from .component import Component
     from .element import Element
 
 
@@ -222,8 +223,6 @@ class Risk:
         self.description = threat.description
         self.impact = impact
         self.likelihood = likelihood
-        self.prerequisites = threat.prerequisites
-        self.mitigations = threat.mitigations
 
         if fix_severity is None:
             self.severity = self._calculate_severity(impact, likelihood)
@@ -232,12 +231,24 @@ class Risk:
 
         self._treatment = treatment
 
+        self._mitigations: Set["Mitigation"] = set()
+
     @property
     def treatment(self) -> Treatment:
-        return self._treatment
+        treatment = Treatment.UNCHECKED
+        for mitigation in self._mitigations:
+            if isinstance(mitigation, Accept):
+                treatment = Treatment.ACCEPTED
+                break
+        
+        return treatment
 
     def treat(self, treatment: Treatment) -> None:
         self._treatment = treatment
+
+    def add_mitigations(self, *mitigations: "Mitigation") -> None:
+        for m in mitigations:
+            self._mitigations.add(m)
 
     def _calculate_severity(self, impact: "Impact", likelihood: "Likelihood") -> "Severity":
         impact_weights = {Impact.LOW: 1, Impact.MEDIUM: 2,

@@ -4,6 +4,7 @@ from enum import Enum
 
 from .node import Construct, TagMixin
 from .element import Element
+from .otm import OpenThreatModelComponent
 
 if TYPE_CHECKING:
     from .data_flow import Data
@@ -143,6 +144,21 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
     @property
     def out_of_scope(self) -> bool:
         return self._out_of_scope
+
+    @property
+    def otm(self) -> "OpenThreatModelComponent":
+        return OpenThreatModelComponent(
+            self.id,
+            self.name,
+            type=str(self.technology),
+            description=self.description,
+            tags=self.tags,
+            attributes={
+                "technologie": str(self.technology),
+                "machine": str(self.machine),
+                "encryption": str(self.encryption),
+            }
+        )
 
     def processes(self, *data: "Data") -> None:
         for item in data:

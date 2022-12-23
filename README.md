@@ -55,8 +55,6 @@ authenticate= tm.DataFlow(
 
 authenticate.transfers(tm.Data("AuthenticateQuery"))
 
-model.evaluate()
-
 print(model.risks_table(table_format=tm.TableFormat.GITHUB))
 ```
 Output:
@@ -76,8 +74,6 @@ Output:
 
 ## Generating Diagrams
 ```python
-model.evaluate()
-
 model.data_flow_diagram()
 ```
 ![threatbook.png](https://github.com/hupe1980/threatmodel/raw/main/.assets/data-flow-diagram.png)

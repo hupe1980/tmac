@@ -1,7 +1,6 @@
 from typing import Optional
 
 from ..component import Process, Technology
-from ..control import Control
 from ..data_flow import Authentication, DataFlow
 from ..threat import AttackCategory, Threat, Threatlib, Likelihood, Impact, Risk, Treatment
 from ..element import Element
@@ -41,11 +40,7 @@ class CAPEC_10(Threat):
         if not target.is_using_environment_variables():
             return None
 
-        # Mitigations
-        if not target.has_controls(Control.INPUT_SANITIZING, Control.BOUNDS_CHECKING):
-            return Risk(target, self, Impact.HIGH, Likelihood.VERY_LIKELY)
-
-        return Risk(target, self, Impact.HIGH, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
+        return Risk(target, self, Impact.HIGH, Likelihood.VERY_LIKELY)
 
 
 class CAPEC_62(Threat):
@@ -75,15 +70,7 @@ class CAPEC_62(Threat):
         if not target.destination.is_web_application():
             return None
 
-        # Mitigations
-        if not target.has_controls(Control.CSRF_TOKEN):
-            # User Interaction Based CSRF Defense
-            if not target.has_at_least_one_of_the_controls(Control.RE_AUTHENTICATION, Control.ONE_TIME_TOKEN, Control.CAPTCHA):
-                return Risk(target.destination, self, Impact.HIGH, Likelihood.VERY_LIKELY)
-
-            return Risk(target.destination, self, Impact.MEDIUM, Likelihood.VERY_LIKELY)
-
-        return Risk(target.destination, self, Impact.HIGH, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
+        return Risk(target.destination, self, Impact.MEDIUM, Likelihood.VERY_LIKELY)
 
 
 class CAPEC_63(Threat):
@@ -119,11 +106,7 @@ class CAPEC_63(Threat):
         if not target.is_web_application():
             return None
 
-        # Mitigations
-        if not target.has_controls(Control.INPUT_SANITIZING, Control.INPUT_VALIDATION):
-            return Risk(target, self, Impact.MEDIUM, Likelihood.LIKELY)
-
-        return Risk(target, self, Impact.MEDIUM, Likelihood.LIKELY, treatment=Treatment.MITIGATED)
+        return Risk(target, self, Impact.MEDIUM, Likelihood.LIKELY)
 
 
 class CAPEC_66(Threat):
@@ -155,15 +138,7 @@ class CAPEC_66(Threat):
         if not target.is_relational_database_protocol():
             return None
 
-        # Mitigations
-        if not target.source.has_controls(Control.INPUT_SANITIZING, Control.INPUT_VALIDATION, Control.PARAMETERIZATION):
-            likelihood = Likelihood.LIKELY
-            if target.source.has_control(Control.WAF):
-                likelihood = Likelihood.UNLIKELY  # WAF Bypass
-
-            return Risk(target.source, self, Impact.HIGH, likelihood)
-
-        return Risk(target, self, Impact.HIGH, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
+        return Risk(target.source, self, Impact.HIGH, Likelihood.LIKELY)
 
 
 class CAPEC_100(Threat):
@@ -198,11 +173,7 @@ class CAPEC_100(Threat):
         # Prerequisites
         # TODO
 
-        # Mitigations
-        if not target.has_control(Control.BOUNDS_CHECKING):
-            return Risk(target, self, Impact.VERY_HIGH, Likelihood.VERY_LIKELY)
-
-        return Risk(target, self, Impact.VERY_HIGH, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
+        return Risk(target, self, Impact.VERY_HIGH, Likelihood.VERY_LIKELY)
 
 
 class CAPEC_101(Threat):
@@ -234,11 +205,7 @@ class CAPEC_101(Threat):
         if not target.is_web_application():
             return None
 
-        # Mitigations
-        if not target.has_at_least_one_of_the_controls(Control.AVOID_SERVER_SIDE_INCLUDES, Control.INPUT_SANITIZING):
-            return Risk(target, self, Impact.HIGH, Likelihood.LIKELY)
-
-        return Risk(target, self, Impact.HIGH, Likelihood.LIKELY, treatment=Treatment.MITIGATED)
+        return Risk(target, self, Impact.HIGH, Likelihood.LIKELY)
 
 
 class CAPEC_102(Threat):
@@ -271,11 +238,7 @@ class CAPEC_102(Threat):
         if not target.authentication == Authentication.SESSION_ID:
             return None
 
-        # Mitigations
-        if not target.is_encrypted():
-            return Risk(target, self, Impact.HIGH, Likelihood.LIKELY)
-
-        return Risk(target, self, Impact.HIGH, Likelihood.LIKELY, treatment=Treatment.MITIGATED)
+        return Risk(target, self, Impact.HIGH, Likelihood.LIKELY)
 
 
 class CAPEC_126(Threat):
@@ -316,11 +279,7 @@ class CAPEC_126(Threat):
         if not target.technology in [Technology.FILE_SERVER, Technology.LOCAL_FILE_SYSTEM]:
             return None
 
-        # Mitigations
-        if not target.has_controls(Control.INPUT_SANITIZING, Control.INPUT_VALIDATION):
-            return Risk(target, self, Impact.MEDIUM, Likelihood.VERY_LIKELY)
-
-        return Risk(target, self, Impact.MEDIUM, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
+        return Risk(target, self, Impact.MEDIUM, Likelihood.VERY_LIKELY)
 
 
 class CAPEC_676(Threat):
@@ -359,11 +318,7 @@ class CAPEC_676(Threat):
         if not target.is_nosql_database_protocol():
             return None
 
-        # Mitigations
-        if not target.source.has_controls(Control.INPUT_SANITIZING, Control.INPUT_VALIDATION):
-            return Risk(target.source, self, Impact.HIGH, Likelihood.LIKELY)
-
-        return Risk(target.source, self, Impact.HIGH, Likelihood.LIKELY, treatment=Treatment.MITIGATED)
+        return Risk(target.source, self, Impact.HIGH, Likelihood.LIKELY)
 
 
 DEFAULT_THREATLIB = Threatlib()

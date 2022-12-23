@@ -2,7 +2,7 @@ import graphviz
 
 
 class DataFlowDiagram(graphviz.Digraph):
-    def __init__(self, title: str) -> None:
+    def __init__(self, title: str, hide_data_flow_labels: bool = False) -> None:
         super().__init__(title, engine='fdp')
 
         self.attr("graph",
@@ -28,8 +28,18 @@ class DataFlowDiagram(graphviz.Digraph):
                   arrowsize="0.5",
                   )
 
-    def add_data_flow(self, tail_name: str, head_name: str, label: str, **overwrites: str) -> None:
-        self.edge(tail_name, head_name, label, **overwrites)
+        self._hide_data_flow_labels = hide_data_flow_labels
+
+    def add_data_flow(self, tail_name: str, head_name: str, label: str = "", bidirectional: bool = False, **overwrites: str) -> None:
+        dir = "forward"
+        if bidirectional:
+            dir = "both"
+
+        self.edge(tail_name, head_name,
+                  label=None if self._hide_data_flow_labels else label,
+                  dir=dir,
+                  **overwrites,
+                  )
 
     def add_asset(self, name: str, label: str, shape: str, **overwrites: str) -> None:
         self.node(name, label, shape=shape, **overwrites)

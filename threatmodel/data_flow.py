@@ -15,23 +15,23 @@ class Classification(OrderedEnum):
     UNKNOWN = 0
 
     PUBLIC = 1
-    """This type of data is freely accessible to the public (i.e. all employees/company personnel). 
-    It can be freely used, reused, and redistributed without repercussions. An example might be 
+    """This type of data is freely accessible to the public (i.e. all employees/company personnel).
+    It can be freely used, reused, and redistributed without repercussions. An example might be
     first and last names, job descriptions, or press releases"""
 
     INTERNAL_ONLY = 2
-    """This type of data is strictly accessible to internal company personnel or internal employees 
-    who are granted access. This might include internal-only memos or other communications, business 
+    """This type of data is strictly accessible to internal company personnel or internal employees
+    who are granted access. This might include internal-only memos or other communications, business
     plans, etc."""
 
     CONFIDENTIAL = 3
-    """Access to confidential data requires specific authorization and/or clearance. Types of confidential 
-    data might include Social Security numbers, cardholder data, M&A documents, and more. Usually, confidential 
+    """Access to confidential data requires specific authorization and/or clearance. Types of confidential
+    data might include Social Security numbers, cardholder data, M&A documents, and more. Usually, confidential
     data is protected by laws like HIPAA and the PCI DSS."""
 
     RESTRICTED = 4
-    """Restricted data includes data that, if compromised or accessed without authorization, which could lead 
-    to criminal charges and massive legal fines or cause irreparable damage to the company. Examples of restricted 
+    """Restricted data includes data that, if compromised or accessed without authorization, which could lead
+    to criminal charges and massive legal fines or cause irreparable damage to the company. Examples of restricted
     data might include proprietary information or research and data protected by state and federal regulations."""
 
     def __str__(self) -> str:
@@ -130,7 +130,7 @@ class Authorization(Enum):
 
 
 class DataFlow(Element, TagMixin):
-    """Data transports between processes, data stores, and external entities"""
+    """Asset transfers between processes, data stores, and external entities"""
 
     def __init__(self, scope: Construct, name: str,
                  source: "Component",
@@ -144,6 +144,14 @@ class DataFlow(Element, TagMixin):
                  authorization: Authorization = Authorization.NONE,
                  overwrite_edge_attrs: Dict[str, str] = dict()
                  ):
+        """
+        Constructs all the necessary attributes for the data_flow object.
+
+        Parameters
+        ----------
+            scope: The scope in which to define this construct.
+
+        """
         super().__init__(scope, name, description=description)
 
         self.source = source
@@ -234,13 +242,20 @@ class DataFlow(Element, TagMixin):
             Protocol.IMAP_ENCRYPTED,
         ]
 
-    def data_flow_diagram(self, auto_view=True):
-        diagram = DataFlowDiagram(self.name)
+    def data_flow_diagram(self, auto_view: bool = True,  hide_data_flow_labels: bool = False) -> None:
+        diagram = DataFlowDiagram(self.name,
+                                  hide_data_flow_labels=hide_data_flow_labels,
+                                  )
 
         diagram.add_data_flow(self.source.id, self.destination.id,
-                              f"{self.protocol}: {self.name}", **self.overwrite_edge_attrs)
+                              lable=f"{self.protocol}: {self.name}",
+                              bidirectional=self.bidirectional,
+                              **self.overwrite_edge_attrs,
+                              )
+
         diagram.add_asset(self.source.id, self.source.name,
                           self.source.shape, **self.source.overwrite_node_attrs)
+
         diagram.add_asset(self.destination.id, self.destination.name,
                           self.destination.shape, **self.destination.overwrite_node_attrs)
 
