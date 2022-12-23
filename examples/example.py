@@ -11,7 +11,7 @@ import threatmodel.plus as tm_plus
 model = tm.Model("REST Login Model")
 
 user = tm_plus.Browser(model, "User")
-
+ 
 web_server = tm.Process(
     model,
     "WebServer",
@@ -28,8 +28,7 @@ login = tm.DataFlow(
     protocol=tm.Protocol.HTTPS,
 )
 
-login.sends(tm.Data("LoginRequest"))
-login.receives(tm.Data("LoginResponse"))
+login.transfers(tm.Data("UserCredentials"))
 
 database = tm.DataStore(
     model,
@@ -46,12 +45,13 @@ authenticate= tm.DataFlow(
     protocol=tm.Protocol.SQL,
 )
 
-authenticate.sends(tm.Data("AuthenticateUserQuery"))
-authenticate.receives(tm.Data("AuthenticateUserQueryResult"))
+authenticate.transfers(tm.Data("AuthenticateQuery"))
 
-result = model.evaluate()
+model.evaluate()
 
-print(result.risks_table(table_format=tm.TableFormat.GITHUB))
+print(model.risks_table(table_format=tm.TableFormat.GITHUB))
 
-result.data_flow_diagram(auto_view=False)
+model.data_flow_diagram(auto_view=False)
+
+print(model.otm)
 

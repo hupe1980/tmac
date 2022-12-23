@@ -1,26 +1,22 @@
-from typing import List, Optional, Set, TYPE_CHECKING
-import uuid
+from abc import ABCMeta, abstractproperty
+from typing import List, Set, TYPE_CHECKING
 from tabulate import tabulate
 
 from .node import Construct
-from .risk import Risk
+from .threat import Risk
 from .table_format import TableFormat
 
 if TYPE_CHECKING:
     from .control import Control
-    from .trust_boundary import TrustBoundary
 
 
-class Element(Construct):
-    """A generic element"""
+class Element(Construct, metaclass=ABCMeta):
+    """A generic model element"""
 
-    def __init__(self, model: Construct, name: str, in_scope: bool = True, trust_boundary: Optional["TrustBoundary"] = None):
-        super().__init__(model, name)
+    def __init__(self, scope: Construct, name: str, description: str = ""):
+        super().__init__(scope, name)
 
-        self.name = name
-        self.uniq_name = self._uniq_name()
-        self.in_scope = in_scope
-        self.trust_boundary = trust_boundary
+        self.description = description
 
         self._controls: Set["Control"] = set()
 
@@ -28,14 +24,18 @@ class Element(Construct):
         from .model import Model
         self._model = Model.of(self)
 
+    @abstractproperty
+    def out_of_scope(self) -> bool:
+        pass
+
     @property
     def risks(self) -> List["Risk"]:
         threatlib = self._model.threatlib
         return threatlib.apply(self)
 
     @property
-    def controls(self) -> Set["Control"]:
-        return self._controls
+    def controls(self) -> List["Control"]:
+        return list(self._controls)
 
     def add_controls(self, *controls: "Control") -> None:
         for control in controls:
@@ -66,7 +66,3 @@ class Element(Construct):
                          risk.name, risk.treatment])
 
         return tabulate(table, headers=headers, tablefmt=str(table_format))
-
-    def _uniq_name(self) -> str:
-        uid = str(uuid.uuid4())[:8]
-        return f"{self.name}_{uid}"

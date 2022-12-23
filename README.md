@@ -36,8 +36,7 @@ login = tm.DataFlow(
     protocol=tm.Protocol.HTTPS,
 )
 
-login.sends(tm.Data("LoginRequest"))
-login.receives(tm.Data("LoginResponse"))
+login.transfers(tm.Data("UserCredentials"))
 
 database = tm.DataStore(
     model,
@@ -54,12 +53,11 @@ authenticate= tm.DataFlow(
     protocol=tm.Protocol.SQL,
 )
 
-authenticate.sends(tm.Data("AuthenticateUserQuery"))
-authenticate.receives(tm.Data("AuthenticateUserQueryResult"))
+authenticate.transfers(tm.Data("AuthenticateQuery"))
 
-result = model.evaluate()
+model.evaluate()
 
-print(result.risks_table(table_format=tm.TableFormat.GITHUB))
+print(model.risks_table(table_format=tm.TableFormat.GITHUB))
 ```
 Output:
 | SID                 | Severity   | Category                   | Name                                | Affected   | Treatment   |
@@ -78,9 +76,9 @@ Output:
 
 ## Generating Diagrams
 ```python
-result = model.evaluate()
+model.evaluate()
 
-result.data_flow_diagram()
+model.data_flow_diagram()
 ```
 ![threatbook.png](https://github.com/hupe1980/threatmodel/raw/main/.assets/data-flow-diagram.png)
 

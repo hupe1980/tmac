@@ -1,6 +1,6 @@
 from typing import Any
 
-from ..asset import Process, Machine, Encryption, Technology
+from ..component import Process, Machine, Encryption, Technology
 from ..control import Control
 from ..node import Construct
 

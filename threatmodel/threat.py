@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from collections.abc import MutableMapping
-from typing import Dict, List, Tuple, Any, Optional, Iterator, TYPE_CHECKING
+from typing import Dict, List, Tuple, Any, Optional, Iterator, Callable, TYPE_CHECKING
 from enum import Enum
 
 if TYPE_CHECKING:
-    from .risk import Risk
+    from .component import Component
     from .element import Element
+
 
 class AttackCategory(Enum):
     ENGAGE_IN_DECEPTIVE_INTERACTIONS = "Engage in Deceptive Interactions"
@@ -66,6 +67,18 @@ class AttackCategory(Enum):
         return str(self.value)
 
 
+class Stride(Enum):
+    SPOOFING = "spoofing"
+    TAMPERING = "tampering"
+    REPUDIATION = "repudiation"
+    INFORMATION_DISCLOSURE = "information-disclosure"
+    DENIAL_OF_SERVICE = "denial-of-service"
+    ELEVATION_OF_PRIVILEGE = "elevation-of-privilege"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
 class Threat(ABC):
     """Represents a possible threat"""
 
@@ -80,7 +93,7 @@ class Threat(ABC):
         self.cwe_ids = cwe_ids
 
     def is_applicable(self, target: "Element") -> bool:
-        if not isinstance(target, self.target) or target.in_scope is False:
+        if target.out_of_scope or not isinstance(target, self.target):
             return False
         return True
 
@@ -91,7 +104,7 @@ class Threat(ABC):
     def __str__(self) -> str:
         prerequisites = "\n".join(["- " + p for p in self.prerequisites])
         mitigations = "\n".join(["- " + m for m in self.mitigations])
-        
+
         return f"""{self.id}: {self.name}
 
 Description:
@@ -104,12 +117,14 @@ Mitigations:
 {mitigations}
 """
 
+
 class Threatlib(MutableMapping[str, Threat]):
     """Represents a threat library"""
 
     def __init__(self) -> None:
-        self.excludes: List[str] = list() # TODO
+        self.excludes: List[str] = list()  # TODO
         self._lib: Dict[str, "Threat"] = dict()
+        self.after_apply_hook: Optional[Callable[[List["Risk"]], None]] = None
 
     def add_threats(self, *threats: "Threat") -> None:
         for threat in threats:
@@ -127,6 +142,9 @@ class Threatlib(MutableMapping[str, Threat]):
                 if risk is not None:
                     risks.append(risk)
 
+        if self.after_apply_hook is not None:
+            self.after_apply_hook(risks)
+
         return risks
 
     def __getitem__(self, id: str) -> Threat:
@@ -140,6 +158,113 @@ class Threatlib(MutableMapping[str, Threat]):
 
     def __iter__(self) -> Iterator[str]:
         return iter(self._lib)
-    
+
     def __len__(self) -> int:
         return len(self._lib)
+
+
+class Impact(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    VERY_HIGH = "very-high"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class Likelihood(Enum):
+    UNLIKELY = "unlikely"
+    LIKELY = "likely"
+    VERY_LIKELY = "very-likely"
+    FREQUENT = "frequent"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class Severity(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    ELEVATED = "elevated"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class Treatment(Enum):
+    UNCHECKED = "unchecked"
+    IN_DISCUSSION = "in-discussion"
+    IN_PROGRESS = "in-progress",
+    MITIGATED = "mitigated"
+    TRANSFERRED = "transferred"
+    AVOIDED = "avoided"
+    ACCEPTED = "accepted"
+    FALSE_POSITIVE = "false-positive"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class Risk:
+    def __init__(self, element: "Element", threat: "Threat",
+                 impact: "Impact",
+                 likelihood: "Likelihood",
+                 fix_severity: Optional["Severity"] = None,
+                 treatment: Treatment = Treatment.UNCHECKED,
+                 ) -> None:
+        self.id = f"{threat.id}@{element.name}"
+        self.target = element.name
+        self.category = threat.category
+        self.name = threat.name
+        self.description = threat.description
+        self.impact = impact
+        self.likelihood = likelihood
+        self.prerequisites = threat.prerequisites
+        self.mitigations = threat.mitigations
+
+        if fix_severity is None:
+            self.severity = self._calculate_severity(impact, likelihood)
+        else:
+            self.severity = fix_severity
+
+        self._treatment = treatment
+
+    @property
+    def treatment(self) -> Treatment:
+        return self._treatment
+
+    def treat(self, treatment: Treatment) -> None:
+        self._treatment = treatment
+
+    def _calculate_severity(self, impact: "Impact", likelihood: "Likelihood") -> "Severity":
+        impact_weights = {Impact.LOW: 1, Impact.MEDIUM: 2,
+                          Impact.HIGH: 3, Impact.VERY_HIGH: 4}
+        likelihood_weights = {Likelihood.UNLIKELY: 1, Likelihood.LIKELY: 2,
+                              Likelihood.VERY_LIKELY: 3, Likelihood.FREQUENT: 4}
+
+        result = likelihood_weights[likelihood] * impact_weights[impact]
+
+        if result <= 1:
+            return Severity.LOW
+
+        if result <= 3:
+            return Severity.MEDIUM
+
+        if result <= 8:
+            return Severity.ELEVATED
+
+        if result <= 12:
+            return Severity.HIGH
+
+        return Severity.CRITICAL
+
+    def __repr__(self):
+        return "<{0}.{1}({2}) at {3}>".format(
+            self.__module__, type(self).__name__, self.id, hex(id(self))
+        )
+
+    def __str__(self) -> str:
+        return f"'{self.id}': {self.name}\n{self.description}\n{self.severity}"

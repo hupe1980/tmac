@@ -3,16 +3,17 @@ from enum import Enum
 
 from .common import OrderedEnum
 from .diagram import DataFlowDiagram
-from .node import Construct
+from .node import Construct, TagMixin
 from .element import Element
+from .otm import OpenThreatModelDataFlow, OpenThreatModelThreatInstance
 
 if TYPE_CHECKING:
-    from .asset import TechnicalAsset
+    from .component import Component
 
 
 class Classification(OrderedEnum):
     UNKNOWN = 0
-    
+
     PUBLIC = 1
     """This type of data is freely accessible to the public (i.e. all employees/company personnel). 
     It can be freely used, reused, and redistributed without repercussions. An example might be 
@@ -33,7 +34,6 @@ class Classification(OrderedEnum):
     to criminal charges and massive legal fines or cause irreparable damage to the company. Examples of restricted 
     data might include proprietary information or research and data protected by state and federal regulations."""
 
-
     def __str__(self) -> str:
         value_map = {
             "0": "Unknown class",
@@ -44,14 +44,15 @@ class Classification(OrderedEnum):
         }
 
         return value_map[str(self.value)]
-    
+
 
 class Data:
     """Represents a single piece of data that traverses the system"""
 
     def __init__(self, name: str, classification: Classification = Classification.UNKNOWN, pii: bool = False):
+        self.id = name  # TODO
         self.name = name
-        self.classificatio = classification
+        self.classification = classification
         self.pii = pii
 
 
@@ -107,7 +108,7 @@ class Protocol(Enum):
 
 
 class Authentication(Enum):
-    NONE = "none",
+    NONE = "none"
     CREDENTIALS = "credentials"
     SESSION_ID = "session-id"
     TOKEN = "token"
@@ -128,54 +129,71 @@ class Authorization(Enum):
         return str(self.value)
 
 
-class DataFlow(Element):
-    """Data movement between processes, data stores, and external entities"""
+class DataFlow(Element, TagMixin):
+    """Data transports between processes, data stores, and external entities"""
 
     def __init__(self, scope: Construct, name: str,
-                 source: "TechnicalAsset",
-                 sink: "TechnicalAsset",
+                 source: "Component",
+                 destination: "Component",
                  protocol: Protocol,
+                 description: str = "",
                  vpn: bool = False,
                  readonly: bool = False,
+                 bidirectional: bool = False,
                  authentication: Authentication = Authentication.NONE,
                  authorization: Authorization = Authorization.NONE,
                  overwrite_edge_attrs: Dict[str, str] = dict()
                  ):
-        super().__init__(scope, name)
+        super().__init__(scope, name, description=description)
 
         self.source = source
-        self.sink = sink
+        self.destination = destination
         self.protocol = protocol
+        self.description = description
         self.vpn = vpn
         self.readonly = readonly
+        self.bidirectional = bidirectional
         self.authentication = authentication
         self.authorization = authorization
         self.overwrite_edge_attrs = overwrite_edge_attrs
 
-        self._data_sent: Set["Data"] = set()
-        self._data_received: Set["Data"] = set()
-
-    def sends(self, *data: Data) -> None:
-        for item in data:
-            self._data_sent.add(item)
-            self._update_partipants(item)
-
-    def receives(self, *data: Data) -> None:
-        for item in data:
-            self._data_received.add(item)
-            self._update_partipants(item)
+        self._assets: Set["Data"] = set()
 
     @property
-    def data_sent(self) -> Set["Data"]:
-        return self._data_sent
+    def out_of_scope(self) -> bool:
+        return self.source.out_of_scope and self.destination.out_of_scope
 
     @property
-    def data_received(self) -> Set["Data"]:
-        return self._data_received
+    def assets(self) -> Set["Data"]:
+        return self._assets
 
-    def _update_partipants(self, data: Data) -> None:
-        self.source.processes(data)
-        self.sink.processes(data)
+    @property
+    def otm(self) -> "OpenThreatModelDataFlow":
+        return OpenThreatModelDataFlow(
+            self.id,
+            self.name,
+            self.source.id,
+            self.destination.id,
+            description=self.description,
+            tags=self.tags,
+            bidirectional=self.bidirectional,
+            assets=[a.id for a in self._assets],
+            threats=[OpenThreatModelThreatInstance(
+                r.id, str(r.treatment)) for r in self.risks],
+            attributes={
+                "protocol": str(self.protocol),
+                "vpn": str(self.vpn),
+                "readonly": str(self.readonly),
+                "authentication": str(self.authentication),
+                "authorization": str(self.authorization),
+            }
+        )
+
+    def transfers(self, *data: Data) -> None:
+        for item in data:
+            self._assets.add(item)
+            self.source.processes(item)
+            self.destination.processes(item)
 
     def is_relational_database_protocol(self) -> bool:
         return self.protocol in [
@@ -216,23 +234,25 @@ class DataFlow(Element):
             Protocol.IMAP_ENCRYPTED,
         ]
 
-    def is_bidirectional(self) -> bool:
-        return len(self._data_sent) > 0 and len(self._data_received) > 0
-
-    def data_flow_diagram(self, auto_view = True):
+    def data_flow_diagram(self, auto_view=True):
         diagram = DataFlowDiagram(self.name)
 
-        diagram.add_data_flow(self.source.uniq_name, self.sink.uniq_name, f"{self.protocol}: {self.name}", **self.overwrite_edge_attrs)
-        diagram.add_asset(self.source.uniq_name, self.source.name, self.source.shape, **self.source.overwrite_node_attrs)
-        diagram.add_asset(self.sink.uniq_name, self.sink.name, self.sink.shape, **self.sink.overwrite_node_attrs)
+        diagram.add_data_flow(self.source.id, self.destination.id,
+                              f"{self.protocol}: {self.name}", **self.overwrite_edge_attrs)
+        diagram.add_asset(self.source.id, self.source.name,
+                          self.source.shape, **self.source.overwrite_node_attrs)
+        diagram.add_asset(self.destination.id, self.destination.name,
+                          self.destination.shape, **self.destination.overwrite_node_attrs)
 
         if auto_view is False or self._model.is_ci():
             diagram.save()
             return
 
         if self._model.is_notebook():
-            from IPython import display
-            display.display(diagram)
+            try:
+                from IPython import display
+                display.display(diagram)
+            except ImportError:
+                diagram.view()
         else:
             diagram.view()
-

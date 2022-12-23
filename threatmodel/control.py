@@ -4,15 +4,17 @@ from enum import Enum
 class classproperty(object):
     def __init__(self, f):
         self.f = f
+
     def __get__(self, obj, owner):
         return self.f(owner)
+
 
 class Control(Enum):
     """Controls implemented by/on and Element"""
 
     @classproperty
     def list(cls):
-        return list(map(lambda c: f"{c.name}: {c.value}", cls)) # type: ignore
+        return list(map(lambda c: f"{c.name}: {c.value}", cls))  # type: ignore
 
     BOUNDS_CHECKING = "Bounds Checking"
 
@@ -32,11 +34,10 @@ class Control(Enum):
     CSRF_TOKEN = "CSRF Token"
 
     RE_AUTHENTICATION = "Re-Authentication"
-    
-    ONE_TIME_TOKEN =  "One-time Token"
+
+    ONE_TIME_TOKEN = "One-time Token"
 
     CAPTCHA = "CAPTCHA"
-    
 
     def __str__(self) -> str:
         return str(self.value)

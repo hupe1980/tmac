@@ -1,10 +1,9 @@
 from typing import Optional
 
-from ..asset import Process, Technology
+from ..component import Process, Technology
 from ..control import Control
 from ..data_flow import Authentication, DataFlow
-from ..risk import Likelihood, Impact, Risk, Treatment
-from ..threat import AttackCategory, Threat, Threatlib
+from ..threat import AttackCategory, Threat, Threatlib, Likelihood, Impact, Risk, Treatment
 from ..element import Element
 
 # See https://capec.mitre.org/data/definitions/2000.html
@@ -73,18 +72,18 @@ class CAPEC_62(Threat):
             return None
 
         # Prerequisites
-        if not target.sink.is_web_application():
+        if not target.destination.is_web_application():
             return None
-        
+
         # Mitigations
         if not target.has_controls(Control.CSRF_TOKEN):
             # User Interaction Based CSRF Defense
             if not target.has_at_least_one_of_the_controls(Control.RE_AUTHENTICATION, Control.ONE_TIME_TOKEN, Control.CAPTCHA):
-                return Risk(target.sink, self, Impact.HIGH, Likelihood.VERY_LIKELY)
-            
-            return Risk(target.sink, self, Impact.MEDIUM, Likelihood.VERY_LIKELY)
+                return Risk(target.destination, self, Impact.HIGH, Likelihood.VERY_LIKELY)
 
-        return Risk(target.sink, self, Impact.HIGH, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
+            return Risk(target.destination, self, Impact.MEDIUM, Likelihood.VERY_LIKELY)
+
+        return Risk(target.destination, self, Impact.HIGH, Likelihood.VERY_LIKELY, treatment=Treatment.MITIGATED)
 
 
 class CAPEC_63(Threat):

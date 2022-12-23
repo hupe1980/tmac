@@ -1,6 +1,6 @@
 from typing import Any
 
-from ..asset import ExternalEntity, Machine, Encryption, Technology
+from ..component import ExternalEntity, Machine, Encryption, Technology
 from ..node import Construct
 
 
