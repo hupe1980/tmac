@@ -87,6 +87,8 @@ class Model(Construct, TagMixin):
             assets=[a.otm for a in self.assets],
             components=[c.otm for c in self.components],
             data_flows=[df.otm for df in self.data_flows],
+            #threats=[r.otm for r in self.risks],
+            mitigations=[m.otm for m in self.mitigations],
         )
 
     def is_notebook(self) -> bool:
@@ -101,20 +103,25 @@ class Model(Construct, TagMixin):
     def get_risk_by_id(self, id: str) -> "Risk":
         return self._risks[id]
 
-    def accept_risk(self, id: str) -> None:
+    def accept_risk(self, id: str) -> Accept:
         accept = Accept(self)
         accept.treats(self.get_risk_by_id(id))
+        return accept
 
-    def ignore_risk(self,id: str) -> None:
+    def ignore_risk(self,id: str) -> FalsePositive:
         ignore = FalsePositive(self)
         ignore.treats(self.get_risk_by_id(id))
+        return ignore
 
-    def transfer_risk(self,id: str) -> None:
+    def transfer_risk(self,id: str) -> Transfer:
         transfer = Transfer(self)
         transfer.treats(self.get_risk_by_id(id))
+        return transfer
 
-    def mitigate_risk(self, id: str, mitigation: Mitigation) -> None:
+    def mitigate_risk(self, id: str, name: str, risk_reduction:int) -> Mitigation:
+        mitigation = Mitigation(self, name, risk_reduction=risk_reduction)
         mitigation.treats(self.get_risk_by_id(id))
+        return mitigation
 
     def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
         headers = ["SID", "Severity", "Category",

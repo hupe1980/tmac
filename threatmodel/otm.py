@@ -51,18 +51,6 @@ class OpenThreatModelComponent(BaseOpenThreatModel):
         self.description = description
         self.attributes = attributes
 
-class OpenThreatModelThreatInstance(BaseOpenThreatModel):
-    def __init__(self, threat: str, state: str) -> None:
-        self.threat = threat
-        self.state = state
-
-    def __eq__(self, other):
-        return self.threat == other.threat
-
-    def __hash__(self):
-        return id(self.threat)
-
-
 class OpenThreatModelDataFlow(BaseOpenThreatModel):
     def __init__(self, id: str, name: str, source: str, destination: str,
                  description: str = "",
@@ -99,6 +87,17 @@ class OpenThreatModelThreat(BaseOpenThreatModel):
         self.attributes = attributes
 
 
+class OpenThreatModelThreatInstance(BaseOpenThreatModel):
+    def __init__(self, threat: str, state: str) -> None:
+        self.threat = threat
+        self.state = state
+
+    def __eq__(self, other):
+        return self.threat == other.threat
+
+    def __hash__(self):
+        return id(self.threat)
+
 class OpenThreatModelMitigation(BaseOpenThreatModel):
      def __init__(self, id: str, name: str,
                  description: str = "",
@@ -112,14 +111,31 @@ class OpenThreatModelMitigation(BaseOpenThreatModel):
         self.attributes = attributes
 
 
+class OpenThreatModelMigrationInstance(BaseOpenThreatModel):
+    def __init__(self, mitigation: str, state: str) -> None:
+        self.mitigation = mitigation
+        self.state = state
+
+    def __eq__(self, other):
+        return self.mitigation == other.mitigation
+
+    def __hash__(self):
+        return id(self.mitigation)
+
+
+
 class OpenThreatModel(BaseOpenThreatModel):
     def __init__(self, project: "OpenThreatModelProject",
                  assets: List["OpenThreatModelAsset"] = list(),
                  components: List["OpenThreatModelComponent"] = list(),
                  data_flows: List["OpenThreatModelDataFlow"] = list(),
+                 threats: List["OpenThreatModelThreat"] = list(),
+                 mitigations: List["OpenThreatModelMitigation"] = list(),
                  ):
         self.otmVersion = "0.1.0"
         self.project = project
         self.assets = set(assets)
         self.components = set(components)
         self.dataflows = set(data_flows)
+        self.threats = set(threats)
+        self.mitigations = set(mitigations)

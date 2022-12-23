@@ -36,7 +36,7 @@ login = tm.DataFlow(
     protocol=tm.Protocol.HTTPS,
 )
 
-login.transfers(tm.Data("UserCredentials"))
+login.transfers(tm.Asset(model, "UserCredentials"))
 
 database = tm.DataStore(
     model,
@@ -53,7 +53,7 @@ authenticate= tm.DataFlow(
     protocol=tm.Protocol.SQL,
 )
 
-authenticate.transfers(tm.Data("AuthenticateQuery"))
+authenticate.transfers(tm.Asset(model, "AuthenticateQuery"))
 
 print(model.risks_table(table_format=tm.TableFormat.GITHUB))
 ```
@@ -106,6 +106,7 @@ See more complete [examples](https://github.com/hupe1980/threatmodel/tree/master
 - [pytm](https://github.com/izar/pytm) - A Pythonic framework for threat modeling
 - [threagile](https://github.com/Threagile/threagile) - Agile Threat Modeling Toolkit
 - [cdk-threagile](https://github.com/hupe1980/cdk-threagile) - Agile Threat Modeling as Code
+- [OpenThreatModel](https://github.com/iriusrisk/OpenThreatModel) - OpenThreatModel
 
 ## License
 

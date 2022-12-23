@@ -197,8 +197,6 @@ class Severity(Enum):
 
 class Treatment(Enum):
     UNCHECKED = "unchecked"
-    IN_DISCUSSION = "in-discussion"
-    IN_PROGRESS = "in-progress",
     MITIGATED = "mitigated"
     TRANSFERRED = "transferred"
     AVOIDED = "avoided"
@@ -214,7 +212,6 @@ class Risk:
                  impact: "Impact",
                  likelihood: "Likelihood",
                  fix_severity: Optional["Severity"] = None,
-                 treatment: Treatment = Treatment.UNCHECKED,
                  ) -> None:
         self.id = f"{threat.id}@{element.name}"
         self.target = element.name
@@ -229,7 +226,7 @@ class Risk:
         else:
             self.severity = fix_severity
 
-        self._treatment = treatment
+        self._treatment = Treatment.UNCHECKED
 
         self._mitigations: Set["Mitigation"] = set()
 
@@ -240,11 +237,11 @@ class Risk:
             if isinstance(mitigation, Accept):
                 treatment = Treatment.ACCEPTED
                 break
+            if isinstance(mitigation, Mitigation): # TODO: risk_reduction, state
+                treatment = Treatment.MITIGATED
+                break
         
         return treatment
-
-    def treat(self, treatment: Treatment) -> None:
-        self._treatment = treatment
 
     def add_mitigations(self, *mitigations: "Mitigation") -> None:
         for m in mitigations:

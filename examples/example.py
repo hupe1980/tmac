@@ -27,7 +27,7 @@ login = tm.DataFlow(
     protocol=tm.Protocol.HTTPS,
 )
 
-login.transfers(tm.Data("UserCredentials"))
+login.transfers(tm.Asset(model, "UserCredentials"))
 
 database = tm.DataStore(
     model,
@@ -44,11 +44,11 @@ authenticate= tm.DataFlow(
     protocol=tm.Protocol.SQL,
 )
 
-authenticate.transfers(tm.Data("AuthenticateQuery"))
+authenticate.transfers(tm.Asset(model, "AuthenticateQuery"))
 
 print(model.risks_table(table_format=tm.TableFormat.GITHUB))
 
-model.mitigate_risk("CAPEC-100@WebServer", tm.Mitigation(model, "DEMO"))
+model.mitigate_risk("CAPEC-100@WebServer", name="BoundChecks", risk_reduction=80)
 
 print(model.risks_table(table_format=tm.TableFormat.GITHUB))
 

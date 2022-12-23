@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractproperty
-from typing import List, Set
+from typing import List
 from tabulate import tabulate
 
 from .node import Construct

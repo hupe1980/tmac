@@ -8,6 +8,7 @@ from .element import Element
 from .otm import OpenThreatModelDataFlow, OpenThreatModelThreatInstance
 
 if TYPE_CHECKING:
+    from .asset import Asset
     from .component import Component
 
 
@@ -44,16 +45,6 @@ class Classification(OrderedEnum):
         }
 
         return value_map[str(self.value)]
-
-
-class Data:
-    """Represents a single piece of data that traverses the system"""
-
-    def __init__(self, name: str, classification: Classification = Classification.UNKNOWN, pii: bool = False):
-        self.id = name  # TODO
-        self.name = name
-        self.classification = classification
-        self.pii = pii
 
 
 class Protocol(Enum):
@@ -165,14 +156,14 @@ class DataFlow(Element, TagMixin):
         self.authorization = authorization
         self.overwrite_edge_attrs = overwrite_edge_attrs
 
-        self._assets: Set["Data"] = set()
+        self._assets: Set["Asset"] = set()
 
     @property
     def out_of_scope(self) -> bool:
         return self.source.out_of_scope and self.destination.out_of_scope
 
     @property
-    def assets(self) -> Set["Data"]:
+    def assets(self) -> Set["Asset"]:
         return self._assets
 
     @property
@@ -197,11 +188,11 @@ class DataFlow(Element, TagMixin):
             }
         )
 
-    def transfers(self, *data: Data) -> None:
-        for item in data:
-            self._assets.add(item)
-            self.source.processes(item)
-            self.destination.processes(item)
+    def transfers(self, *assets: "Asset") -> None:
+        for asset in assets:
+            self._assets.add(asset)
+            self.source.processes(asset)
+            self.destination.processes(asset)
 
     def is_relational_database_protocol(self) -> bool:
         return self.protocol in [

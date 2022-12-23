@@ -7,7 +7,7 @@ from .element import Element
 from .otm import OpenThreatModelComponent
 
 if TYPE_CHECKING:
-    from .data_flow import Data
+    from .asset import Asset
     from .trust_boundary import TrustBoundary
 
 
@@ -138,8 +138,8 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
 
         self._out_of_scope = out_of_scope
         self._uses_environment_variables = uses_environment_variables
-        self._data_assets_processed: Set["Data"] = set()
-        self._data_assets_stored: Set["Data"] = set()
+        self._assets_processed: Set["Asset"] = set()
+        self._assets_stored: Set["Asset"] = set()
 
     @property
     def out_of_scope(self) -> bool:
@@ -160,15 +160,15 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
             }
         )
 
-    def processes(self, *data: "Data") -> None:
-        for item in data:
-            self._data_assets_processed.add(item)
+    def processes(self, *assets: "Asset") -> None:
+        for asset in assets:
+            self._assets_processed.add(asset)
 
-    def stores(self, *data: "Data", skip_process: bool = False) -> None:
-        for item in data:
-            self._data_assets_stored.add(item)
+    def stores(self, *assets: "Asset", skip_process: bool = False) -> None:
+        for asset in assets:
+            self._assets_stored.add(asset)
             if not skip_process:
-                self._data_assets_processed.add(item)
+                self._assets_processed.add(asset)
 
     def is_using_environment_variables(self) -> bool:
         return self._uses_environment_variables
