@@ -1,4 +1,4 @@
-from .asset import Asset
+from .asset import Asset, Confidentiality, Integrity, Availability
 from .threatlib import DEFAULT_THREATLIB
 from .element import Element
 from .mitigation import Mitigation
@@ -12,6 +12,9 @@ from .component import Machine, Technology, DataFormat, Component, ExternalEntit
 
 __all__ = (
     "Asset",
+    "Confidentiality",
+    "Integrity",
+    "Availability",
     "AttackCategory",
     "Protocol",
     "Authentication",

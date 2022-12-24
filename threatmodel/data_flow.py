@@ -1,6 +1,7 @@
-from typing import Set, Dict, TYPE_CHECKING
+from typing import Set, Dict, List, Union, overload, TYPE_CHECKING
 from enum import Enum
 
+from .asset import Asset, Confidentiality, Integrity, Availability
 from .common import OrderedEnum
 from .diagram import DataFlowDiagram
 from .node import Construct, TagMixin
@@ -8,7 +9,6 @@ from .element import Element
 from .otm import OpenThreatModelDataFlow, OpenThreatModelThreatInstance
 
 if TYPE_CHECKING:
-    from .asset import Asset
     from .component import Component
 
 
@@ -188,19 +188,39 @@ class DataFlow(Element, TagMixin):
             }
         )
 
-    def transfers(self, *assets: "Asset") -> None:
-        for asset in assets:
+    def validate(self) -> List[str]:
+        if len(self.assets) == 0:
+            return [f"Unnecessary Communication Link: {self.name}"]
+        return []
+
+    @overload
+    def transfers(self, asset: "Asset") -> "Asset":
+        ...
+
+    @overload
+    def transfers(self, asset: str, confidentiality: Confidentiality, integrity: Integrity, availability: Availability) -> "Asset":
+        ...
+
+    def transfers(self, asset: Union["Asset", str], confidentiality: Confidentiality = Confidentiality.NONE, integrity: Integrity = Integrity.NONE, availability: Availability = Availability.NONE)  -> "Asset":
+        if isinstance(asset, Asset):
             self._assets.add(asset)
             self.source.processes(asset)
             self.destination.processes(asset)
+            return asset
+        
+        new_asset = Asset(self, name=asset, confidentiality=confidentiality, integrity=integrity, availability=availability)
+        self._assets.add(new_asset)
+        self.source.processes(new_asset)
+        self.destination.processes(new_asset)
+        return new_asset
 
     def is_relational_database_protocol(self) -> bool:
         return self.protocol in [
             Protocol.JDBC,
-            Protocol.ODBC,
-            Protocol.SQL,
             Protocol.JDBC_ENCRYPTED,
+            Protocol.ODBC,
             Protocol.ODBC_ENCRYPTED,
+            Protocol.SQL,
             Protocol.SQL_ENCRYPTED,
         ]
 

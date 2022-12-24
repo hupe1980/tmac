@@ -230,6 +230,10 @@ class Risk:
 
         self._mitigations: Set["Mitigation"] = set()
 
+        self.inherent_risk = ""
+        self.current_risk = ""
+        self.projected_risk = ""
+
     @property
     def treatment(self) -> Treatment:
         treatment = Treatment.UNCHECKED
@@ -276,3 +280,7 @@ class Risk:
 
     def __str__(self) -> str:
         return f"'{self.id}': {self.name}\n{self.description}\n{self.severity}"
+
+
+class RiskCalculation:
+    pass

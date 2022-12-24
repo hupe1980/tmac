@@ -267,7 +267,7 @@ class CAPEC_126(Threat):
                 "Implementation: Use possible permissions on file access when developing and deploying web applications.",
                 "Implementation: Validate user input by only accepting known good. Ensure all content that is delivered to client is sanitized against an acceptable content specification -- using an allowlist approach.",
             ],
-            cwe_ids=[294, 522, 523, 319, 614],
+            cwe_ids=[22],
         )
 
     def apply(self, target: "Element") -> Optional["Risk"]:

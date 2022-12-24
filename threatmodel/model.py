@@ -14,7 +14,10 @@ from .threatlib import DEFAULT_THREATLIB
 from .otm import OpenThreatModel, OpenThreatModelProject
 
 if TYPE_CHECKING:
-    from .threat import Threat, Threatlib,  Risk, Treatment
+    from .threat import Threat, Threatlib,  Risk
+
+class ModelException(Exception):
+    pass
 
 
 class Model(Construct, TagMixin):
@@ -38,6 +41,7 @@ class Model(Construct, TagMixin):
                  owner: str = "",
                  owner_contact: str = "",
                  auto_evaluate: bool = True,
+                 skip_validation: bool = False,
                  threatlib: Optional["Threatlib"] = None,
                  ) -> None:
         super().__init__(None, name)
@@ -51,9 +55,11 @@ class Model(Construct, TagMixin):
         else:
             self.threatlib = threatlib
 
-        self._auto_evaluate = auto_evaluate
+        self.auto_evaluate = auto_evaluate
+        self.skip_validation = skip_validation
+        
         self._risks: Dict[str, "Risk"] = dict()
-
+    
     @property
     def assets(self) -> List["Asset"]:
         return cast(List["Asset"], list(filter(lambda c: isinstance(c, Asset), self.node.find_all())))
@@ -72,7 +78,7 @@ class Model(Construct, TagMixin):
 
     @property
     def risks(self) -> List["Risk"]:
-        if self._auto_evaluate:
+        if self.auto_evaluate:
             self.evaluate_risks()
 
         return list(self._risks.values())
@@ -125,7 +131,7 @@ class Model(Construct, TagMixin):
 
     def risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
         headers = ["SID", "Severity", "Category",
-                   "Name", "Affected", "Treatment"]
+                   "Threat", "Affected", "Treatment"]
         table = []
         for risk in self.risks:
             table.append([risk.id, risk.severity, risk.category, risk.name,
@@ -167,6 +173,16 @@ class Model(Construct, TagMixin):
             diagram.view()
 
     def evaluate_risks(self) -> None:
+        self.node.lock()
+
+        if not self.skip_validation:
+            exceptions: List[ModelException] = list()
+            for c in self.node.find_all():
+                errors = c.node.validate()
+                for error in errors:
+                    exceptions.append(ModelException(error))
+            # raise ExceptionGroup("", exceptions) TODO 3.11 or with backport
+        
         self._risks = dict()
         mitigations = self.mitigations
 
@@ -176,3 +192,5 @@ class Model(Construct, TagMixin):
                     risk.add_mitigations(
                         *[m for m in mitigations if m.is_applicable(risk.id)])
                     self._risks[risk.id] = risk
+
+        self.node.unlock()

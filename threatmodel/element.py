@@ -20,6 +20,8 @@ class Element(Construct, metaclass=ABCMeta):
         from .model import Model
         self._model = Model.of(self)
 
+        self.node.add_validation(self.validate)
+
     @abstractproperty
     def out_of_scope(self) -> bool:
         pass
@@ -29,11 +31,14 @@ class Element(Construct, metaclass=ABCMeta):
         threatlib = self._model.threatlib
         return threatlib.apply(self)
 
+    def validate(self) -> List[str]:
+        return [] 
+
     def get_risk_by_id(self, id: str) -> "Risk":
         return [risk for risk in self.risks if risk.id == id][0]
 
     def risks_table(self, table_format: "TableFormat" = TableFormat.SIMPLE) -> str:
-        headers = ["SID", "Severity", "Category", "Name", "Treatment"]
+        headers = ["SID", "Severity", "Category", "Threat", "Treatment"]
         table = []
 
         for risk in self.risks:

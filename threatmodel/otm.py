@@ -29,14 +29,22 @@ class OpenThreatModelProject(BaseOpenThreatModel):
 
 
 class OpenThreatModelAsset(BaseOpenThreatModel):
-    def __init__(self, id: str, name: str,
+    def __init__(self, id: str, name: str, risk: "OpenThreatModelAssetRisk",
                  description: str = "",
                  attributes: Dict[str, str] = dict(),
                  ):
         self.id = id
         self.name = name
         self.description = description
+        self.risk = risk
         self.attributes = attributes
+
+class OpenThreatModelAssetRisk(BaseOpenThreatModel):
+    def __init__(self, confidentiality: int, integrity: int, availability: int, comment: str = "") -> None:
+        self.confidentiality = confidentiality
+        self.integrity = integrity
+        self.availability = availability
+        self.comment = comment
 
 class OpenThreatModelComponent(BaseOpenThreatModel):
     def __init__(self, id: str, name: str, type: str,

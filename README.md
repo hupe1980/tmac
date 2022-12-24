@@ -36,7 +36,7 @@ login = tm.DataFlow(
     protocol=tm.Protocol.HTTPS,
 )
 
-login.transfers(tm.Asset(model, "UserCredentials"))
+login.transfers("UserCredentials", tm.Confidentiality.HIGH, tm.Integrity.HIGH, tm.Availability.HIGH)
 
 database = tm.DataStore(
     model,
@@ -53,7 +53,9 @@ authenticate= tm.DataFlow(
     protocol=tm.Protocol.SQL,
 )
 
-authenticate.transfers(tm.Asset(model, "AuthenticateQuery"))
+user_details = tm.Asset(model, "UserDetails", tm.Confidentiality.HIGH, tm.Integrity.HIGH, tm.Availability.HIGH)
+
+authenticate.transfers(user_details)
 
 print(model.risks_table(table_format=tm.TableFormat.GITHUB))
 ```

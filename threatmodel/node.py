@@ -1,4 +1,4 @@
-from typing import Dict, List, Set, Optional
+from typing import Dict, List, Set, Callable, Optional
 import uuid
 
 
@@ -14,9 +14,21 @@ class Node:
         self._host = host
         self._locked = False
         self._children: Dict[str, "Construct"] = dict()
+        self._validations: List[Callable[[],List[str]]] = list()
 
         if scope is not None:
             scope.node._add_child(host, self.id)
+
+    @property
+    def locked(self) -> bool:
+        if self._locked:
+            return True
+
+        if self.scope is not None and self.scope.node.locked:
+            return True
+
+        return False
+
 
     def find_child(self, id: str) -> Optional["Construct"]:
         return self._children.get(id)
@@ -37,10 +49,22 @@ class Node:
     def children(self):
         return list(self._children.values())
 
-    def _lock(self):
+    def add_validation(self, validate: Callable[[],List[str]]) -> None:
+        self._validations.append(validate)
+
+    def validate(self) -> List[str]:
+        return [error for validate in self._validations for error in validate()]
+
+    def lock(self):
         self._locked = True
 
+    def unlock(self):
+        self._locked = False
+
     def _add_child(self, child: "Construct", id: str) -> None:
+        if self.locked:
+            raise RuntimeError("Cannot add children")
+            
         self._children[id] = child
 
 
