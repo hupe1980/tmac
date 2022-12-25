@@ -1,4 +1,4 @@
-from typing import Dict, List, Set, Callable, Optional
+from typing import Dict, List, Callable, Optional
 import uuid
 
 
@@ -82,16 +82,3 @@ class Construct:
         return f"{self.name}_{uid}"
 
 
-class TagMixin:
-    _tags: Set[str] = set()
-
-    @property
-    def tags(self) -> List[str]:
-        return list(self._tags)
-
-    def add_tags(self, *tags: str) -> None:
-        for tag in tags:
-            self._tags.add(tag)
-
-    def has_tag(self, tag: str) -> bool:
-        return tag in self._tags

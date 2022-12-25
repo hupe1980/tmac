@@ -11,6 +11,7 @@ from .trust_boundary import TrustBoundary
 from .threat import AttackCategory, Threat, Threatlib, Likelihood, Severity, Impact, Treatment, Risk
 from .score import Score
 from .table_format import TableFormat
+from .tag import TagMixin
 
 
 
@@ -32,6 +33,7 @@ __all__ = (
     "Construct",
     "Score",
     "TableFormat",
+    "TagMixin",
     "Machine",
     "Technology",
     "DataFormat",

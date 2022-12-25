@@ -5,11 +5,12 @@ from .asset import Asset
 from .component import Component
 from .element import Element
 from .mitigation import Mitigation, Accept, FalsePositive, Transfer
-from .node import Construct, TagMixin
+from .node import Construct
 from .data_flow import DataFlow
 from .common import is_notebook, is_ci
 from .diagram import DataFlowDiagram
 from .table_format import TableFormat
+from .tag import TagMixin
 from .threatlib import DEFAULT_THREATLIB
 from .otm import OpenThreatModel, OpenThreatModelProject
 

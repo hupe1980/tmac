@@ -2,9 +2,10 @@ from abc import ABCMeta, abstractproperty
 from typing import Any, Set, Optional, List, Dict, TYPE_CHECKING, cast
 from enum import Enum
 
-from .node import Construct, TagMixin
+from .node import Construct
 from .element import Element
 from .otm import OpenThreatModelComponent
+from .tag import TagMixin
 
 if TYPE_CHECKING:
     from .asset import Asset

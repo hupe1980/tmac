@@ -3,10 +3,11 @@ from enum import Enum
 
 from .asset import Asset
 from .diagram import DataFlowDiagram
-from .node import Construct, TagMixin
+from .node import Construct
 from .element import Element
 from .otm import OpenThreatModelDataFlow, OpenThreatModelThreatInstance
 from .score import Score
+from .tag import TagMixin
 
 if TYPE_CHECKING:
     from .component import Component
