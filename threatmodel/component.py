@@ -23,7 +23,7 @@ class Machine(Enum):
 
 
 class Technology(Enum):
-    UNKNOWN = "unknown-technology"
+    UNKNOWN = "unknown"
     CLIENT_SYSTEM = "client-system"
     BROWSER = "browser"
     DESKTOP = "desktop"

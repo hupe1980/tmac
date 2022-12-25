@@ -1,3 +1,4 @@
+import os
 from typing import Dict, List, Optional, TYPE_CHECKING, cast
 from tabulate import tabulate
 
@@ -7,7 +8,6 @@ from .element import Element
 from .mitigation import Mitigation, Accept, FalsePositive, Transfer
 from .node import Construct
 from .data_flow import DataFlow
-from .common import is_notebook, is_ci
 from .diagram import DataFlowDiagram
 from .table_format import TableFormat
 from .tag import TagMixin
@@ -101,10 +101,19 @@ class Model(Construct, TagMixin):
         )
 
     def is_notebook(self) -> bool:
-        return is_notebook()
+        try:
+            shell = get_ipython().__class__.__name__  # type: ignore
+            if shell == 'ZMQInteractiveShell':
+                return True   # Jupyter notebook or qtconsole
+            elif shell == 'TerminalInteractiveShell':
+                return False  # Terminal running IPython
+            else:
+                return False  # Other type (?)
+        except NameError:
+            return False      # Probably standard Python interpreter
 
     def is_ci(self) -> bool:
-        return is_ci()
+        return os.environ.get("CI") is not None
 
     def get_threat_by_id(self, id: str) -> Optional["Threat"]:
         return self.threatlib.get(id)
