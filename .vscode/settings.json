@@ -8,5 +8,6 @@
       "--allow-subclassing-any",
       "--allow-untyped-calls",
       "--strict"
-    ]
+    ],
+    "python.formatting.provider": "black"
   }
