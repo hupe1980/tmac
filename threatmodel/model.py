@@ -16,6 +16,7 @@ from .otm import OpenThreatModel, OpenThreatModelProject
 if TYPE_CHECKING:
     from .threat import Threat, Threatlib,  Risk
 
+
 class ModelException(Exception):
     pass
 
@@ -36,14 +37,15 @@ class Model(Construct, TagMixin):
 
         return lookup(construct)
 
-    def __init__(self, name: str,
-                 description: str = "",
-                 owner: str = "",
-                 owner_contact: str = "",
-                 auto_evaluate: bool = True,
-                 skip_validation: bool = False,
-                 threatlib: Optional["Threatlib"] = None,
-                 ) -> None:
+    def __init__(
+        self, name: str, *,
+        description: str = "",
+        owner: str = "",
+        owner_contact: str = "",
+        auto_evaluate: bool = True,
+        skip_validation: bool = False,
+        threatlib: Optional["Threatlib"] = None,
+    ) -> None:
         super().__init__(None, name)
 
         self.description = description
@@ -57,9 +59,9 @@ class Model(Construct, TagMixin):
 
         self.auto_evaluate = auto_evaluate
         self.skip_validation = skip_validation
-        
+
         self._risks: Dict[str, "Risk"] = dict()
-    
+
     @property
     def assets(self) -> List["Asset"]:
         return cast(List["Asset"], list(filter(lambda c: isinstance(c, Asset), self.node.find_all())))
@@ -93,7 +95,7 @@ class Model(Construct, TagMixin):
             assets=[a.otm for a in self.assets],
             components=[c.otm for c in self.components],
             data_flows=[df.otm for df in self.data_flows],
-            #threats=[r.otm for r in self.risks],
+            # threats=[r.otm for r in self.risks],
             mitigations=[m.otm for m in self.mitigations],
         )
 
@@ -114,17 +116,17 @@ class Model(Construct, TagMixin):
         accept.treats(self.get_risk_by_id(id))
         return accept
 
-    def ignore_risk(self,id: str) -> FalsePositive:
+    def ignore_risk(self, id: str) -> FalsePositive:
         ignore = FalsePositive(self)
         ignore.treats(self.get_risk_by_id(id))
         return ignore
 
-    def transfer_risk(self,id: str) -> Transfer:
+    def transfer_risk(self, id: str) -> Transfer:
         transfer = Transfer(self)
         transfer.treats(self.get_risk_by_id(id))
         return transfer
 
-    def mitigate_risk(self, id: str, name: str, risk_reduction:int) -> Mitigation:
+    def mitigate_risk(self, id: str, name: str, risk_reduction: int) -> Mitigation:
         mitigation = Mitigation(self, name, risk_reduction=risk_reduction)
         mitigation.treats(self.get_risk_by_id(id))
         return mitigation
@@ -182,7 +184,7 @@ class Model(Construct, TagMixin):
                 for error in errors:
                     exceptions.append(ModelException(error))
             # raise ExceptionGroup("", exceptions) TODO 3.11 or with backport
-        
+
         self._risks = dict()
         mitigations = self.mitigations
 

@@ -22,38 +22,44 @@ model = tm.Model("Login Model")
 user = tm_plus.Browser(model, "User")
 
 web_server = tm.Process(
-    model,
-    "WebServer",
+    model, "WebServer",
     machine=tm.Machine.VIRTUAL,
     technology=tm.Technology.WEB_WEB_APPLICATION,
 )
 
 login = tm.DataFlow(
-    model,
-    "Login",
-    user,
-    web_server,
+    model, "Login",
+    source=user,
+    destination=web_server,
     protocol=tm.Protocol.HTTPS,
 )
 
-login.transfers("UserCredentials", tm.Confidentiality.HIGH, tm.Integrity.HIGH, tm.Availability.HIGH)
+login.transfers(
+    "UserCredentials",
+    confidentiality=tm.Score.HIGH,
+    integrity=tm.Score.HIGH,
+    availability=tm.Score.HIGH,
+)
 
 database = tm.DataStore(
-    model,
-    "Database",
+    model, "Database",
     machine=tm.Machine.VIRTUAL,
     technology=tm.Technology.DATABASE,
 )
 
-authenticate= tm.DataFlow(
-    model,
-    "Authenticate",
-    web_server,
-    database ,
+authenticate = tm.DataFlow(
+    model, "Authenticate",
+    source=web_server,
+    destination=database,
     protocol=tm.Protocol.SQL,
 )
 
-user_details = tm.Asset(model, "UserDetails", tm.Confidentiality.HIGH, tm.Integrity.HIGH, tm.Availability.HIGH)
+user_details = tm.Asset(
+    model, "UserDetails",
+    confidentiality=tm.Score.HIGH,
+    integrity=tm.Score.HIGH,
+    availability=tm.Score.HIGH,
+)
 
 authenticate.transfers(user_details)
 

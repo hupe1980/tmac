@@ -12,11 +12,15 @@ class ImplementationState(Enum):
     DRAFT = "draft"
     IN_PROGRESS = "in-progress"
     IMPLEMENTET = "implementet"
-    
 
 
 class Mitigation(Construct):
-    def __init__(self, scope: Construct, name: str, risk_reduction: int, description: str = "", state: "ImplementationState" = ImplementationState.DRAFT) -> None:
+    def __init__(
+        self, scope: Construct, name: str, *,
+        risk_reduction: int = 0,
+        description: str = "",
+        state: "ImplementationState" = ImplementationState.DRAFT,
+    ) -> None:
         super().__init__(scope, name)
 
         self.description = description

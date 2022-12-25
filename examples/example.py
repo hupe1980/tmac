@@ -5,8 +5,8 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.abspath(''), '..')))
 
-import threatmodel.plus as tm_plus
-import threatmodel as tm
+import threatmodel.plus as tm_plus  # noqa: E402
+import threatmodel as tm  # noqa: E402
 
 
 model = tm.Model("REST Login Model")
@@ -14,47 +14,57 @@ model = tm.Model("REST Login Model")
 user = tm_plus.Browser(model, "User")
 
 web_server = tm.Process(
-    model,
-    "WebServer",
+    model, "WebServer",
     machine=tm.Machine.VIRTUAL,
     technology=tm.Technology.WEB_APPLICATION,
 )
 
 login = tm.DataFlow(
-    model,
-    "Login",
-    user,
-    web_server,
+    model, "Login",
+    source=user,
+    destination=web_server,
     protocol=tm.Protocol.HTTPS,
 )
 
-login.transfers("UserCredentials", tm.Confidentiality.HIGH, tm.Integrity.HIGH, tm.Availability.HIGH)
+login.transfers(
+    "UserCredentials",
+    confidentiality=tm.Score.HIGH,
+    integrity=tm.Score.HIGH,
+    availability=tm.Score.HIGH,
+)
 
 database = tm.DataStore(
-    model,
-    "Database",
+    model, "Database",
     machine=tm.Machine.VIRTUAL,
     technology=tm.Technology.DATABASE,
 )
 
 authenticate = tm.DataFlow(
-    model,
-    "Authenticate",
-    web_server,
-    database,
+    model, "Authenticate",
+    source=web_server,
+    destination=database,
     protocol=tm.Protocol.SQL,
 )
 
-user_details = tm.Asset(model, "UserDetails", tm.Confidentiality.HIGH, tm.Integrity.HIGH, tm.Availability.HIGH)
+user_details = tm.Asset(
+    model, "UserDetails",
+    confidentiality=tm.Score.HIGH,
+    integrity=tm.Score.HIGH,
+    availability=tm.Score.HIGH,
+)
 
 authenticate.transfers(user_details)
 
 print(model.risks_table(table_format=tm.TableFormat.GITHUB))
 
-model.mitigate_risk("CAPEC-100@WebServer", name = "BoundChecks", risk_reduction = 80)
+model.mitigate_risk(
+    "CAPEC-100@WebServer",
+    name="BoundChecks",
+    risk_reduction=80,
+)
 
 print(model.risks_table(table_format=tm.TableFormat.GITHUB))
 
-model.data_flow_diagram(auto_view = False)
+model.data_flow_diagram(auto_view=False)
 
-#print(model.otm)
+# print(model.otm)

@@ -1,34 +1,10 @@
-from enum import IntEnum
 from .node import Construct
 from .otm import OpenThreatModelAsset, OpenThreatModelAssetRisk
-
-class Confidentiality(IntEnum):
-    NONE = 0
-    LOW = 20
-    MEDIUM = 40
-    HIGH = 60
-    VERY_HIGH = 80
-    CRITICAL = 100
-
-class Integrity(IntEnum):
-    NONE = 0
-    LOW = 20
-    MEDIUM = 40
-    HIGH = 60
-    VERY_HIGH = 80
-    CRITICAL = 100
-
-class Availability(IntEnum):
-    NONE = 0
-    LOW = 20
-    MEDIUM = 40
-    HIGH = 60
-    VERY_HIGH = 80
-    CRITICAL = 100
+from .score import Score
 
 
 class Asset(Construct):
-    def __init__(self, scope: Construct, name: str, confidentiality: Confidentiality, integrity: Integrity, availability: Availability, description: str = "") -> None:
+    def __init__(self, scope: Construct, name: str, *, confidentiality: Score, integrity: Score, availability: Score, description: str = "") -> None:
         super().__init__(scope, name)
 
         self.description = description
@@ -37,7 +13,7 @@ class Asset(Construct):
         self.availability = availability
 
     @property 
-    def average_asset_score(self):
+    def average_asset_score(self) -> float:
         return (self.confidentiality + self.integrity + self.availability) / 3
 
     @property

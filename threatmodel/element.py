@@ -26,6 +26,10 @@ class Element(Construct, metaclass=ABCMeta):
     def out_of_scope(self) -> bool:
         pass
 
+    @abstractproperty
+    def max_average_asset_score(self) -> float:
+        pass
+
     @property
     def risks(self) -> List["Risk"]:
         threatlib = self._model.threatlib

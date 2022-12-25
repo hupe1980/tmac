@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractproperty
-from typing import Any, Set, Optional, List, Dict, TYPE_CHECKING
+from typing import Any, Set, Optional, List, Dict, TYPE_CHECKING, cast
 from enum import Enum
 
 from .node import Construct, TagMixin
@@ -106,22 +106,23 @@ class DataFormat(Enum):
 
 
 class Component(Element, TagMixin, metaclass=ABCMeta):
-    def __init__(self, scope: Construct, name: str,
-                 machine: Machine,
-                 technology: Technology,
-                 description: str = "",
-                 trust_boundary: Optional["TrustBoundary"] = None,
-                 uses_environment_variables: bool = False,
-                 human_use: bool = False,
-                 internet_facing: bool = False,
-                 encryption: Encryption = Encryption.NONE,
-                 multi_tenant: bool = False,
-                 redundant: bool = False,
-                 custom_developed_parts: bool = False,
-                 accept_data_formats: List[DataFormat] = [],
-                 out_of_scope: bool = False,
-                 overwrite_node_attrs: Dict[str, str] = dict(),
-                 ):
+    def __init__(
+        self, scope: Construct, name: str, *,
+        machine: Machine,
+        technology: Technology,
+        description: str = "",
+        trust_boundary: Optional["TrustBoundary"] = None,
+        uses_environment_variables: bool = False,
+        human_use: bool = False,
+        internet_facing: bool = False,
+        encryption: Encryption = Encryption.NONE,
+        multi_tenant: bool = False,
+        redundant: bool = False,
+        custom_developed_parts: bool = False,
+        accept_data_formats: List[DataFormat] = [],
+        out_of_scope: bool = False,
+        overwrite_node_attrs: Dict[str, str] = dict(),
+    ):
         super().__init__(scope, name, description=description)
 
         self.trust_boundary = trust_boundary
@@ -159,6 +160,12 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
                 "encryption": str(self.encryption),
             }
         )
+
+    @property
+    def max_average_asset_score(self) -> float:
+        assets: Set["Asset"] = set.union(
+            self._assets_processed, self._assets_stored)
+        return cast(float, max([a.average_asset_score for a in assets], default=0))
 
     def processes(self, *assets: "Asset") -> None:
         for asset in assets:
@@ -200,7 +207,7 @@ class ExternalEntity(Component):
 
     def __init__(self, scope: Construct, name: str, **kwargs: Any):
         super().__init__(scope, name, out_of_scope=True, **kwargs)
-    
+
     @property
     def shape(self) -> str:
         return "box"
