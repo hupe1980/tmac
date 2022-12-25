@@ -1,5 +1,7 @@
+from typing import Any
+
 class ScoreMeta(type):
-    def __init__(cls, name, bases, dct):
+    def __init__(cls, *args: Any) -> None:
         cls.NONE: "Score" = cls(0)
         cls.VERY_LOW: "Score" = cls(20)
         cls.LOW: "Score" = cls(40)
@@ -13,7 +15,7 @@ class Score(int, metaclass=ScoreMeta):
             raise ValueError(f"Score must be betwenn 0 and 100: {value}")
         return super().__new__(cls, value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self == 0:
             return "None"
         if self > 0 and self <= 20:
@@ -26,5 +28,6 @@ class Score(int, metaclass=ScoreMeta):
             return "High"
         if self > 80:
             return "Very High"
+        return NotImplemented
     
 

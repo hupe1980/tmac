@@ -42,7 +42,7 @@ class Node:
     def find_all(self) -> List["Construct"]:
         ret: List["Construct"] = list()
 
-        def visit(c):
+        def visit(c: "Construct") -> None:
             ret.append(c)
 
             for c in c.node.children:
