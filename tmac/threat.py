@@ -215,7 +215,7 @@ class Risk:
         likelihood: "Likelihood",
         fix_severity: Optional["Severity"] = None,
     ) -> None:
-        self.id = f"{threat.id}@{element.name}"
+        self.id: str = f"{threat.id}@{element.name}"
         self.target = element.name
         self.category = threat.category
         self.name = threat.name

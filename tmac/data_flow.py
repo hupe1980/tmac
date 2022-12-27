@@ -170,7 +170,7 @@ class DataFlow(Element, TagMixin):
 
     @property
     def max_average_asset_score(self) -> float:
-        return cast(float, max([a.average_asset_score for a in self.assets], default=0))
+        return cast(float, max([a.average_score for a in self.assets], default=0))
 
     @property
     def otm(self) -> "OpenThreatModelDataFlow":

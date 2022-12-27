@@ -1,4 +1,4 @@
-from threatmodel import TagMixin
+from tmac import TagMixin
 
 
 def test_tag_mixin() -> None:

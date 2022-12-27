@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     pass
 
 class TrustBoundary(Element):
-    """Trust zone changes as data flows through the system."""
+    """Trust boundary."""
 
     def __init__(self, scope: Construct, name: str, description: str = "",) -> None:
         super().__init__(scope, name, description=description)

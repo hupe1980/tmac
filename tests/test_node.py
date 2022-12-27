@@ -1,10 +1,5 @@
 import pytest
-from threatmodel import Construct
-
-
-@pytest.fixture
-def root() -> "Construct":
-    return Construct(None, "")
+from tmac import Construct
 
 
 def test_special_root_construct(root: "Construct") -> None:
@@ -17,4 +12,3 @@ def test_special_root_construct(root: "Construct") -> None:
 def test_no_empty_id_by_none_root_constructs(root: "Construct") -> None:
     with pytest.raises(ValueError):
         Construct(root, "")
-

@@ -1,3 +1,4 @@
+from .id import unique_id
 from .node import Construct
 from .otm import OpenThreatModelAsset, OpenThreatModelAssetRisk
 from .score import Score
@@ -5,15 +6,16 @@ from .score import Score
 
 class Asset(Construct):
     def __init__(self, scope: Construct, name: str, *, confidentiality: Score, integrity: Score, availability: Score, description: str = "") -> None:
-        super().__init__(scope, name)
+        super().__init__(scope, unique_id(name))
 
+        self.name = name
         self.description = description
         self.confidentiality = confidentiality
         self.integrity = integrity
         self.availability = availability
 
     @property 
-    def average_asset_score(self) -> float:
+    def average_score(self) -> float:
         return (self.confidentiality + self.integrity + self.availability) / 3
 
     @property

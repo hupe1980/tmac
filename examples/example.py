@@ -3,59 +3,68 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.abspath(''), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.abspath(""), "..")))
 
-import threatmodel.plus as tm_plus  # noqa: E402
-import threatmodel as tm  # noqa: E402
+from tmac import (
+    Asset,
+    DataFlow,
+    DataStore,
+    Machine,
+    Model,  
+    Process,
+    Protocol,
+    Score,
+    TableFormat,
+    Technology,
+) # noqa: E402
+from tmac.plus import Browser  # noqa: E402
 
+model = Model("REST Login Model")
 
-model = tm.Model("REST Login Model")
+user = Browser(model, "User")
 
-user = tm_plus.Browser(model, "User")
-
-web_server = tm.Process(
-    model, "WebServer",
-    machine=tm.Machine.VIRTUAL,
-    technology=tm.Technology.WEB_APPLICATION,
+web_server = Process(
+    model,
+    "WebServer",
+    machine=Machine.VIRTUAL,
+    technology=Technology.WEB_APPLICATION,
 )
 
-login = tm.DataFlow(
-    model, "Login",
-    source=user,
-    destination=web_server,
-    protocol=tm.Protocol.HTTPS,
-)
+login = user.add_data_flow("Login", destination=web_server, protocol=Protocol.HTTPS)
 
 login.transfers(
     "UserCredentials",
-    confidentiality=tm.Score.HIGH,
-    integrity=tm.Score.HIGH,
-    availability=tm.Score.HIGH,
+    confidentiality=Score.HIGH,
+    integrity=Score.HIGH,
+    availability=Score.HIGH,
 )
 
-database = tm.DataStore(
-    model, "Database",
-    machine=tm.Machine.VIRTUAL,
-    technology=tm.Technology.DATABASE,
+database = DataStore(
+    model,
+    "Database",
+    machine=Machine.VIRTUAL,
+    technology=Technology.DATABASE,
 )
 
-authenticate = tm.DataFlow(
-    model, "Authenticate",
+authenticate = DataFlow(
+    model,
+    "Authenticate",
     source=web_server,
     destination=database,
-    protocol=tm.Protocol.SQL,
+    protocol=Protocol.SQL,
 )
 
-user_details = tm.Asset(
-    model, "UserDetails",
-    confidentiality=tm.Score.HIGH,
-    integrity=tm.Score.HIGH,
-    availability=tm.Score.HIGH,
+user_details = Asset(
+    model,
+    "UserDetails",
+    confidentiality=Score.HIGH,
+    integrity=Score.HIGH,
+    availability=Score.HIGH,
 )
 
 authenticate.transfers(user_details)
 
-print(model.risks_table(table_format=tm.TableFormat.GITHUB))
+print(model.risks_table(table_format=TableFormat.GITHUB))
 
 model.mitigate_risk(
     "CAPEC-100@WebServer",
@@ -63,7 +72,7 @@ model.mitigate_risk(
     risk_reduction=80,
 )
 
-print(model.risks_table(table_format=tm.TableFormat.GITHUB))
+print(model.risks_table(table_format=TableFormat.GITHUB))
 
 model.data_flow_diagram(auto_view=False)
 

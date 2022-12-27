@@ -1,11 +1,11 @@
 import pytest
-from threatmodel import Score
+from tmac import Score
 
 def test_score():
     assert Score(0) == 0
     assert Score(100) == 100
 
-def test_score_raise_value_error():
+def test_score_raises_value_error():
     with pytest.raises(ValueError):
         Score(101)
 

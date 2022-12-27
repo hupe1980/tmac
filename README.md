@@ -1,69 +1,70 @@
-# threatmodel
+# tmac
 > Agile Threat Modeling as Code
 
 ## Install
 ```bash
-pip install threatmodel
+pip install tmac
 ```
 
 ## How to use
 ```bash
-python3 threatmodel.py
+python3 tmac.py
 ```
 
 ```python
 #!/usr/bin/env python3
 
-import threatmodel as tm
-import threatmodel.plus as tm_plus
+from tmac import (Asset, DataFlow, DataStore, Machine, Model,
+                  Process, Protocol, Score, TableFormat, Technology)
+from tmac.plus import Browser
 
-model = tm.Model("Login Model")
+model = Model("Login Model")
 
-user = tm_plus.Browser(model, "User")
+user = Browser(model, "User")
 
-web_server = tm.Process(
+web_server = Process(
     model, "WebServer",
-    machine=tm.Machine.VIRTUAL,
-    technology=tm.Technology.WEB_WEB_APPLICATION,
+    machine=Machine.VIRTUAL,
+    technology=Technology.WEB_WEB_APPLICATION,
 )
 
-login = tm.DataFlow(
+login = DataFlow(
     model, "Login",
     source=user,
     destination=web_server,
-    protocol=tm.Protocol.HTTPS,
+    protocol=Protocol.HTTPS,
 )
 
 login.transfers(
     "UserCredentials",
-    confidentiality=tm.Score.HIGH,
-    integrity=tm.Score.HIGH,
-    availability=tm.Score.HIGH,
+    confidentiality=Score.HIGH,
+    integrity=Score.HIGH,
+    availability=Score.HIGH,
 )
 
-database = tm.DataStore(
+database = DataStore(
     model, "Database",
-    machine=tm.Machine.VIRTUAL,
-    technology=tm.Technology.DATABASE,
+    machine=Machine.VIRTUAL,
+    technology=Technology.DATABASE,
 )
 
-authenticate = tm.DataFlow(
+authenticate = DataFlow(
     model, "Authenticate",
     source=web_server,
     destination=database,
-    protocol=tm.Protocol.SQL,
+    protocol=Protocol.SQL,
 )
 
-user_details = tm.Asset(
+user_details = Asset(
     model, "UserDetails",
-    confidentiality=tm.Score.HIGH,
-    integrity=tm.Score.HIGH,
-    availability=tm.Score.HIGH,
+    confidentiality=Score.HIGH,
+    integrity=Score.HIGH,
+    availability=Score.HIGH,
 )
 
 authenticate.transfers(user_details)
 
-print(model.risks_table(table_format=tm.TableFormat.GITHUB))
+print(model.risks_table(table_format=TableFormat.GITHUB))
 ```
 Output:
 | SID                 | Severity   | Category                   | Name                                | Affected   | Treatment   |
@@ -75,40 +76,40 @@ Output:
 | CAPEC-66@WebServer  | elevated   | Inject Unexpected Items    | SQL Injection                       | WebServer  | unchecked   |
 |...|...|...|...|...|...|
 
-## Jupyter Threatbook
-> Threatmodeling with jupyter notebooks
+## Jupyter Threatbooks
+> Threat modeling with jupyter notebooks
 
-![threatbook.png](https://github.com/hupe1980/threatmodel/raw/main/.assets/threatbook.png)
+![threatbook.png](https://github.com/hupe1980/tmac/raw/main/.assets/threatbook.png)
 
 ## Generating Diagrams
 ```python
 model.data_flow_diagram()
 ```
-![threatbook.png](https://github.com/hupe1980/threatmodel/raw/main/.assets/data-flow-diagram.png)
+![threatbook.png](https://github.com/hupe1980/tmac/raw/main/.assets/data-flow-diagram.png)
 
-## High level elements (threatmodel/plus*)
+## High level elements (tmac/plus*)
 ```python
-import threatmodel.plus_aws as tm_plus_aws
+from tmac.plus_aws import ApplicationLoadBalancer
 
 # ...
 
-alb = tm_plus_aws.ApplicationLoadBalancer(model, "ALB", waf=True)
+alb = ApplicationLoadBalancer(model, "ALB", waf=True)
 
 ```
 
 ## Custom threatlib
 ```python
-import threatmodel as tm
+from tmac import Model, Threatlib
 
-threatlib = tm.Threatlib()
+threatlib = Threatlib()
 
 threatlib.add_threat("""... your custom threats ...""")
 
-model = tm.Model("Demo Model", threatlib=threatlib)
+model = Model("Demo Model", threatlib=threatlib)
 ```
 ## Examples
 
-See more complete [examples](https://github.com/hupe1980/threatmodel/tree/master/examples).
+See more complete [examples](https://github.com/hupe1980/tmac/tree/master/examples).
 
 ## Prior work and other related projects
 - [pytm](https://github.com/izar/pytm) - A Pythonic framework for threat modeling

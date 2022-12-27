@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractproperty
 from typing import Any, Set, Optional, List, Dict, TYPE_CHECKING, cast
 from enum import Enum
 
+from .data_flow import DataFlow, Protocol
 from .node import Construct
 from .element import Element
 from .otm import OpenThreatModelComponent
@@ -12,14 +13,18 @@ if TYPE_CHECKING:
     from .trust_boundary import TrustBoundary
 
 
-class Machine(Enum):
-    PHYSICAL = "physical"
-    VIRTUAL = "virtual"
-    CONTAINER = "container"
-    SERVERLESS = "serverless"
+class MachineMeta(type):
+    def __init__(cls, *args: Any) -> None:
+        cls.UNKNOWN: "Machine" = cls("unknown")
+        cls.PHYSICAL: "Machine" = cls("physical")
+        cls.VIRTUAL: "Machine" = cls("virtual")
+        cls.CONTAINER: "Machine" = cls("container")
+        cls.SERVERLESS: "Machine" = cls("serverless")
 
-    def __str__(self) -> str:
-        return str(self.value)
+
+class Machine(str, metaclass=MachineMeta): # type: ignore[misc] # https://github.com/python/mypy/issues/14033
+    def __new__(cls, value: str) -> "Machine":
+        return super().__new__(cls, value)
 
 
 class Technology(Enum):
@@ -108,7 +113,10 @@ class DataFormat(Enum):
 
 class Component(Element, TagMixin, metaclass=ABCMeta):
     def __init__(
-        self, scope: Construct, name: str, *,
+        self,
+        scope: Construct,
+        name: str,
+        *,
         machine: Machine,
         technology: Technology,
         description: str = "",
@@ -140,9 +148,14 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
 
         self._out_of_scope = out_of_scope
         self._uses_environment_variables = uses_environment_variables
+
         self._assets_processed: Set["Asset"] = set()
         self._assets_stored: Set["Asset"] = set()
 
+    @abstractproperty
+    def shape(self) -> str:
+        pass
+    
     @property
     def out_of_scope(self) -> bool:
         return self._out_of_scope
@@ -159,14 +172,30 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
                 "technologie": str(self.technology),
                 "machine": str(self.machine),
                 "encryption": str(self.encryption),
-            }
+            },
         )
 
     @property
     def max_average_asset_score(self) -> float:
-        assets: Set["Asset"] = set.union(
-            self._assets_processed, self._assets_stored)
-        return cast(float, max([a.average_asset_score for a in assets], default=0))
+        assets: Set["Asset"] = set.union(self._assets_processed, self._assets_stored)
+        return cast(float, max([a.average_score for a in assets], default=0))
+
+    def add_data_flow(
+        self,
+        name: str,
+        *,
+        destination: "Component",
+        protocol: "Protocol",
+        **kwargs: Any,
+    ) -> "DataFlow":
+        return DataFlow(
+            self,
+            name,
+            source=self,
+            destination=destination,
+            protocol=protocol,
+            **kwargs,
+        )
 
     def processes(self, *assets: "Asset") -> None:
         for asset in assets:
@@ -197,10 +226,6 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
             Technology.WEB_SERVICE_REST,
             Technology.WEB_SERVICE_SOAP,
         ]
-
-    @abstractproperty
-    def shape(self) -> str:
-        pass
 
 
 class ExternalEntity(Component):

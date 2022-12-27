@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "threatmodel"
-version = "0.0.19"
+name = "tmac"
+version = "0.0.1"
 description = "Agile Threat Modeling as Code"
 authors = ["hupe1980"]
-repository = "https://github.com/hupe1980/threatmodel"
-homepage = "https://github.com/hupe1980/threatmodel"
+repository = "https://github.com/hupe1980/tmac"
+homepage = "https://github.com/hupe1980/tmac"
 license = "MIT"
 readme = "README.md"
 classifiers = [
@@ -14,11 +14,11 @@ classifiers = [
     "Topic :: Security",
 ]
 keywords = [
-    "agile", 
+    "agile",
+    "decsecops", 
     "threat-modeling", 
     "cybersecurity", 
     "appsec", 
-    "threatbook", 
     "jupyter-notebook", 
     "OpenThreatModel", 
     "otm",

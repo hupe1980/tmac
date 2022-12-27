@@ -41,8 +41,8 @@ __all__ = (
     "ExternalEntity",
     "Process",
     "DataStore",
-    "TrustBoundary"
+    "TrustBoundary",
     "Threat",
     "Threatlib",
-    "DEFAULT_THREATLIB"
+    "DEFAULT_THREATLIB",
 )

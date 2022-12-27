@@ -6,6 +6,7 @@ from .asset import Asset
 from .component import Component
 from .element import Element
 from .mitigation import Mitigation, Accept, FalsePositive, Transfer
+from .id import unique_id
 from .node import Construct
 from .data_flow import DataFlow
 from .diagram import DataFlowDiagram
@@ -47,8 +48,9 @@ class Model(Construct, TagMixin):
         skip_validation: bool = False,
         threatlib: Optional["Threatlib"] = None,
     ) -> None:
-        super().__init__(None, name)
+        super().__init__(None, unique_id(name))
 
+        self.name = name
         self.description = description
         self.owner = owner
         self.owner_contact = owner_contact
@@ -83,7 +85,6 @@ class Model(Construct, TagMixin):
     def risks(self) -> List["Risk"]:
         if self.auto_evaluate:
             self.evaluate_risks()
-
         return list(self._risks.values())
 
     @property
@@ -119,6 +120,8 @@ class Model(Construct, TagMixin):
         return self.threatlib.get(id)
 
     def get_risk_by_id(self, id: str) -> "Risk":
+        if self.auto_evaluate:
+            self.evaluate_risks()
         return self._risks[id]
 
     def accept_risk(self, id: str) -> Accept:
@@ -193,7 +196,8 @@ class Model(Construct, TagMixin):
                 errors = c.node.validate()
                 for error in errors:
                     exceptions.append(ModelException(error))
-            # raise ExceptionGroup("", exceptions) TODO 3.11 or with backport
+            if len(exceptions) > 0:
+                raise ExceptionGroup("Validation errors", exceptions)
 
         self._risks = dict()
         mitigations = self.mitigations

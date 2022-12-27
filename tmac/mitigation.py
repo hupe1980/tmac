@@ -1,6 +1,7 @@
 from typing import Any, Set, TYPE_CHECKING
 from enum import Enum
 
+from .id import unique_id
 from .node import Construct
 from .otm import OpenThreatModelMitigation
 
@@ -21,8 +22,9 @@ class Mitigation(Construct):
         description: str = "",
         state: "ImplementationState" = ImplementationState.DRAFT,
     ) -> None:
-        super().__init__(scope, name)
+        super().__init__(scope, unique_id(name))
 
+        self.name = name
         self.description = description
         self.risk_reduction = risk_reduction
         self._risk_ids: Set[str] = set()

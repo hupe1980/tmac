@@ -108,7 +108,7 @@ class OpenThreatModelDataFlow(BaseOpenThreatModel):
         self.attributes = attributes
 
 
-class OpenThreatModelThreatRiskObject(BaseOpenThreatModel):
+class OpenThreatModelThreatRisk(BaseOpenThreatModel):
     def __init__(
         self,
         likelihood: int,
@@ -119,7 +119,8 @@ class OpenThreatModelThreatRiskObject(BaseOpenThreatModel):
         self.likelihood = likelihood
         self.impact = impact
         self.likelihoodComment = likelihood_comment
-        self.impactComment = impact_comment 
+        self.impactComment = impact_comment
+
 
 class OpenThreatModelThreat(BaseOpenThreatModel):
     def __init__(

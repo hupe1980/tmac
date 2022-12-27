@@ -1,5 +1,4 @@
-from typing import Dict, List, Callable, Optional
-import uuid
+from typing import Any, Dict, List, Callable, Optional, cast
 
 
 class Node:
@@ -7,7 +6,9 @@ class Node:
     def of(construct: "Construct") -> "Node":
         return construct.node
 
-    def __init__(self, host: "Construct", scope: Optional["Construct"] = None, id: str = "") -> None:
+    def __init__(
+        self, host: "Construct", scope: Optional["Construct"] = None, id: str = ""
+    ) -> None:
         self.id = id
         self.scope = scope
 
@@ -18,6 +19,7 @@ class Node:
         self._locked = False
         self._children: Dict[str, "Construct"] = dict()
         self._validations: List[Callable[[], List[str]]] = list()
+        self._context: Dict[str, Any] = dict()
 
         if scope is not None:
             scope.node._add_child(host, self.id)
@@ -72,13 +74,6 @@ class Node:
 
 
 class Construct:
-    def __init__(self, scope: Optional["Construct"], name: str) -> None:
-        self.name = name
-        self.id = self._uuid() if self.name != "" else ""
+    def __init__(self, scope: Optional["Construct"], id: str) -> None:
+        self.id = id
         self.node = Node(self, scope, self.id)
-
-    def _uuid(self) -> str:
-        uid = str(uuid.uuid4())[:8]
-        return f"{self.name}_{uid}"
-
-

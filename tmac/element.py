@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractproperty
 from typing import List
 from tabulate import tabulate
 
+from .id import unique_id
 from .node import Construct
 from .threat import Risk
 from .table_format import TableFormat
@@ -12,8 +13,9 @@ class Element(Construct, metaclass=ABCMeta):
     """A generic model element"""
 
     def __init__(self, scope: Construct, name: str, description: str = ""):
-        super().__init__(scope, name)
+        super().__init__(scope, unique_id(name))
 
+        self.name = name
         self.description = description
 
         # import when need to avoid circular import
