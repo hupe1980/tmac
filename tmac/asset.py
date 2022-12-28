@@ -5,7 +5,7 @@ from .score import Score
 
 
 class Asset(Construct):
-    def __init__(self, scope: Construct, name: str, *, confidentiality: Score, integrity: Score, availability: Score, description: str = "") -> None:
+    def __init__(self, scope: Construct, name: str, *, confidentiality: Score, integrity: Score, availability: Score, description: str = "", is_pii: bool = False) -> None:
         super().__init__(scope, unique_id(name))
 
         self.name = name
@@ -13,6 +13,7 @@ class Asset(Construct):
         self.confidentiality = confidentiality
         self.integrity = integrity
         self.availability = availability
+        self.is_pii = is_pii
 
     @property 
     def average_score(self) -> float:
@@ -29,5 +30,8 @@ class Asset(Construct):
                 availability=self.availability,
             ),
             description=self.description,
+            attributes={
+                "is_pii": str(self.is_pii),
+            }
         )
 

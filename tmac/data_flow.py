@@ -1,10 +1,10 @@
-from typing import Set, Dict, List, Union, overload, TYPE_CHECKING, cast
 from enum import Enum
+from typing import TYPE_CHECKING, Dict, List, Set, Union, cast, overload
 
 from .asset import Asset
-from .diagram import DataFlowDiagram
-from .node import Construct
+from .diagram import DataFlowDiagram, DiagramEdge
 from .element import Element
+from .node import Construct
 from .otm import OpenThreatModelDataFlow, OpenThreatModelThreatInstance
 from .score import Score
 from .tag import TagMixin
@@ -156,8 +156,8 @@ class DataFlow(Element, TagMixin):
         self.bidirectional = bidirectional
         self.authentication = authentication
         self.authorization = authorization
-        self.overwrite_edge_attrs = overwrite_edge_attrs
-
+        
+        self._overwrite_edge_attrs = overwrite_edge_attrs
         self._assets: Set["Asset"] = set()
 
     @property
@@ -194,6 +194,10 @@ class DataFlow(Element, TagMixin):
             }
         )
 
+    @property
+    def diagram_edge(self)-> "DiagramEdge":
+        return DiagramEdge(self.source.id, self.destination.id, label=f"{self.protocol}: {self.name}", bidirectional=self.bidirectional, **self._overwrite_edge_attrs)
+
     def validate(self) -> List[str]:
         if len(self.assets) == 0:
             return [f"Unnecessary Communication Link: {self.name}"]
@@ -220,6 +224,9 @@ class DataFlow(Element, TagMixin):
         self.source.processes(new_asset)
         self.destination.processes(new_asset)
         return new_asset
+
+    def is_across_trust_boundary(self) -> bool:
+        return self.source.trust_boundary != self.destination.trust_boundary
 
     def is_relational_database_protocol(self) -> bool:
         return self.protocol in [
@@ -261,31 +268,13 @@ class DataFlow(Element, TagMixin):
         ]
 
     def data_flow_diagram(self, auto_view: bool = True,  hide_data_flow_labels: bool = False) -> None:
-        diagram = DataFlowDiagram(self.name,
-                                  hide_data_flow_labels=hide_data_flow_labels,
-                                  )
-
-        diagram.add_data_flow(self.source.id, self.destination.id,
-                              lable=f"{self.protocol}: {self.name}",
-                              bidirectional=self.bidirectional,
-                              **self.overwrite_edge_attrs,
-                              )
-
-        diagram.add_asset(self.source.id, self.source.name,
-                          self.source.shape, **self.source.overwrite_node_attrs)
-
-        diagram.add_asset(self.destination.id, self.destination.name,
-                          self.destination.shape, **self.destination.overwrite_node_attrs)
-
-        if auto_view is False or self._model.is_ci():
+        diagram = DataFlowDiagram(self.name, is_notebook=self._model.is_notebook(), hide_data_flow_labels=hide_data_flow_labels)
+        diagram.add_node(self.source.diagram_node)
+        diagram.add_node(self.destination.diagram_node)
+        diagram.add_edge(self.diagram_edge)
+        if auto_view is False or self._model.is_notebook() or self._model.is_ci():
             diagram.save()
             return
 
-        if self._model.is_notebook():
-            try:
-                from IPython import display
-                display.display(diagram)
-            except ImportError:
-                diagram.view()
-        else:
-            diagram.view()
+        diagram.show()
+

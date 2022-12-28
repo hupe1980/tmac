@@ -1,13 +1,15 @@
 from abc import ABCMeta, abstractproperty
-from typing import List
+from typing import List, TYPE_CHECKING
 from tabulate import tabulate
 
 from .id import unique_id
 from .node import Construct
-from .threat import Risk
 from .table_format import TableFormat
 
 
+if TYPE_CHECKING:
+    from .risk import Risk
+    
 
 class Element(Construct, metaclass=ABCMeta):
     """A generic model element"""

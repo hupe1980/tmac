@@ -9,5 +9,6 @@
       "--allow-untyped-calls",
       "--strict"
     ],
-    "python.formatting.provider": "black"
+    "python.formatting.provider": "black",
+    "python.linting.enabled": true
   }

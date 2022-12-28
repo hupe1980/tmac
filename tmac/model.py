@@ -1,22 +1,24 @@
 import os
-from typing import Dict, List, Optional, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, cast
+
 from tabulate import tabulate
 
 from .asset import Asset
 from .component import Component
-from .element import Element
-from .mitigation import Mitigation, Accept, FalsePositive, Transfer
-from .id import unique_id
-from .node import Construct
 from .data_flow import DataFlow
 from .diagram import DataFlowDiagram
+from .element import Element
+from .id import unique_id
+from .mitigation import Accept, FalsePositive, Mitigation, Transfer
+from .node import Construct
+from .otm import OpenThreatModel, OpenThreatModelProject
 from .table_format import TableFormat
 from .tag import TagMixin
 from .threatlib import DEFAULT_THREATLIB
-from .otm import OpenThreatModel, OpenThreatModelProject
 
 if TYPE_CHECKING:
-    from .threat import Threat, Threatlib,  Risk
+    from .risk import Risk
+    from .threat import Threat, Threatlib
 
 
 class ModelException(Exception):
@@ -155,37 +157,49 @@ class Model(Construct, TagMixin):
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
     def data_flow_diagram(self, auto_view: bool = True, hide_data_flow_labels: bool = False) -> None:
-        diagram = DataFlowDiagram(self.name,
-                                  hide_data_flow_labels=hide_data_flow_labels,
-                                  )
-
-        for df in self.data_flows:
-            diagram.add_data_flow(df.source.id, df.destination.id,
-                                  label=f"{df.protocol}: {df.name}",
-                                  bidirectional=df.bidirectional,
-                                  **df.overwrite_edge_attrs,
-                                  )
-
+        diagram = DataFlowDiagram(self.name, is_notebook=self.is_notebook(), hide_data_flow_labels=hide_data_flow_labels)
         for c in self.components:
-            diagram.add_asset(
-                c.id,
-                c.name,
-                c.shape,
-                **c.overwrite_node_attrs,
-            )
-
-        if auto_view is False or self.is_ci():
+            diagram.add_node(c.diagram_node)
+        
+        for df in self.data_flows:
+            diagram.add_edge(df.diagram_edge)
+        
+        if auto_view is False or self.is_notebook() or self.is_ci():
             diagram.save()
             return
 
-        if self.is_notebook():
-            try:
-                from IPython import display
-                display.display(diagram)
-            except ImportError:
-                diagram.view()
-        else:
-            diagram.view()
+        diagram.show()
+        # diagram = DataFlowDiagram(self.name,
+        #                           hide_data_flow_labels=hide_data_flow_labels,
+        #                           )
+
+        # for df in self.data_flows:
+        #     diagram.add_data_flow(df.source.id, df.destination.id,
+        #                           label=f"{df.protocol}: {df.name}",
+        #                           bidirectional=df.bidirectional,
+        #                           **df.overwrite_edge_attrs,
+        #                           )
+
+        # for c in self.components:
+        #     diagram.add_asset(
+        #         c.id,
+        #         c.name,
+        #         c.representation,
+        #         **c.overwrite_node_attrs,
+        #     )
+
+        # if auto_view is False or self.is_ci():
+        #     diagram.save()
+        #     return
+
+        # if self.is_notebook():
+        #     try:
+        #         from IPython import display
+        #         display.display(diagram)
+        #     except ImportError:
+        #         diagram.view()
+        # else:
+        #     diagram.view()
 
     def evaluate_risks(self) -> None:
         self.node.lock()

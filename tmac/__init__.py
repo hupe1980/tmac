@@ -1,19 +1,18 @@
 from .asset import Asset
-from .component import Machine, Technology, DataFormat, Component, ExternalEntity, Process, DataStore
-from .data_flow import Protocol, Authentication, Authorization, DataFlow
+from .component import (Component, DataFormat, DataStore, ExternalEntity,
+                        Machine, Process, Technology)
+from .data_flow import Authentication, Authorization, DataFlow, Protocol
 from .element import Element
 from .mitigation import Mitigation
 from .model import Model
 from .node import Construct
-from .threatlib import DEFAULT_THREATLIB
-
-from .trust_boundary import TrustBoundary
-from .threat import AttackCategory, Threat, Threatlib, Likelihood, Severity, Impact, Treatment, Risk
+from .risk import Impact, Likelihood, Risk, Severity, Treatment
 from .score import Score
 from .table_format import TableFormat
 from .tag import TagMixin
-
-
+from .threat import AttackCategory, Threat, Threatlib
+from .threatlib import DEFAULT_THREATLIB
+from .trust_boundary import TrustBoundary
 
 __all__ = (
     "Asset",

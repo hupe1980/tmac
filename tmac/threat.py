@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from collections.abc import MutableMapping
-from typing import Dict, List, Set, Tuple, Any, Optional, Iterator, Callable, TYPE_CHECKING
 from enum import Enum
-
-from .mitigation import Mitigation, Accept, FalsePositive
+from typing import (TYPE_CHECKING, Any, Callable, Dict, Iterator, List,
+                    Optional, Tuple)
 
 if TYPE_CHECKING:
     from .element import Element
+    from .risk import Risk
 
 
 class AttackCategory(Enum):
@@ -70,20 +70,63 @@ class AttackCategory(Enum):
 
 class Stride(Enum):
     SPOOFING = "spoofing"
+    """Involves illegally accessing and then using another user's authentication information, such as username and password."""
+
     TAMPERING = "tampering"
+    """Involves the malicious modification of data. Examples include unauthorized changes made to persistent data, such as that held in a database, and the alteration of data as it flows between two computers over an open network, such as the Internet."""
+    
     REPUDIATION = "repudiation"
+    """Associated with users who deny performing an action without other parties having any way to prove otherwise."""
+
     INFORMATION_DISCLOSURE = "information-disclosure"
+    """Involves the exposure of information to individuals who are not supposed to have access to it."""
+
     DENIAL_OF_SERVICE = "denial-of-service"
+    """Denial of service (DoS) attacks deny service to valid users."""
+
     ELEVATION_OF_PRIVILEGE = "elevation-of-privilege"
+    """An unprivileged user gains privileged access and thereby has sufficient access to compromise or destroy the entire system. Elevation of privilege threats include those situations in which an attacker has effectively penetrated all system defenses and become part of the trusted system itself, a dangerous situation indeed."""
 
     def __str__(self) -> str:
         return str(self.value)
+
+class Linddum(Enum):
+    LINKABILITY = "linkability"
+    """An adversary is able to link two items of interest without knowing the identity of the data subject(s) involved."""
+    
+    IDENTIFIABILITY = "identifiability"
+    """An adversary is able to identify a data subject from a set of data subjects through an item of interest."""
+    
+    NON_REPUDIATION = "non-repudiation"
+    """The data subject is unable to deny a claim (e.g., having performed an action, or sent a request)."""
+    
+    DETECTABILITY = "detectability"
+    """An adversary is able to distinguish whether an item of interest about a data subject exists or not, regardless of being able to read the contents itself."""
+    
+    DISCLOSURE_OF_INFORMATION = "disclosure-of-information"
+    """An adversary is able to learn the content of an item of interest about a data subject."""
+   
+    UNAWARENESS = "unawareness"
+    """The data subject is unaware of the collection, processing, storage, or sharing activities (and corresponding purposes) of the data subject’s personal data."""
+    
+    NON_COMPLIANCE = "non-compliance"
+    """The processing, storage, or handling of personal data is not compliant with legislation, regulation, and/or policy."""
 
 
 class Threat(ABC):
     """Represents a possible threat"""
 
-    def __init__(self, id: str, name: str, target: Tuple[Any, ...], category: AttackCategory, description: str = "", prerequisites: List[str] = [], mitigations: List[str] = [], cwe_ids: List[int] = []) -> None:
+    def __init__(
+        self,
+        id: str,
+        name: str,
+        target: Tuple[Any, ...],
+        category: AttackCategory,
+        description: str = "",
+        prerequisites: List[str] = [],
+        mitigations: List[str] = [],
+        cwe_ids: List[int] = [],
+    ) -> None:
         self.id = id
         self.name = name
         self.target = target
@@ -162,149 +205,3 @@ class Threatlib(MutableMapping[str, Threat]):
 
     def __len__(self) -> int:
         return len(self._lib)
-
-
-class Impact(Enum):
-    VERY_LOW = "very-low"
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    VERY_HIGH = "very-high"
-
-    def __str__(self) -> str:
-        return str(self.value)
-
-
-class Likelihood(Enum):
-    UNLIKELY = "unlikely"
-    LIKELY = "likely"
-    VERY_LIKELY = "very-likely"
-    FREQUENT = "frequent"
-
-    def __str__(self) -> str:
-        return str(self.value)
-
-
-class Severity(Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    ELEVATED = "elevated"
-    HIGH = "high"
-    CRITICAL = "critical"
-
-    def __str__(self) -> str:
-        return str(self.value)
-
-
-class Treatment(Enum):
-    UNCHECKED = "unchecked"
-    MITIGATED = "mitigated"
-    TRANSFERRED = "transferred"
-    AVOIDED = "avoided"
-    ACCEPTED = "accepted"
-    FALSE_POSITIVE = "false-positive"
-
-    def __str__(self) -> str:
-        return str(self.value)
-
-
-class Risk:
-    def __init__(
-        self, element: "Element", threat: "Threat",
-        impact: "Impact",
-        likelihood: "Likelihood",
-        fix_severity: Optional["Severity"] = None,
-    ) -> None:
-        self.id: str = f"{threat.id}@{element.name}"
-        self.target = element.name
-        self.category = threat.category
-        self.name = threat.name
-        self.description = threat.description
-        self.impact = impact
-        self.likelihood = likelihood
-
-        self._elemet = element
-        self._threat = threat
-
-        if fix_severity is None:
-            self.severity = self._calculate_severity(impact, likelihood)
-        else:
-            self.severity = fix_severity
-
-        self._treatment = Treatment.UNCHECKED
-
-        self._mitigations: Set["Mitigation"] = set()
-
-        self._inherent_risk = ""
-        self._current_risk = ""
-        self._projected_risk = ""
-
-    @property
-    def treatment(self) -> Treatment:
-        treatment = Treatment.UNCHECKED
-        for mitigation in self._mitigations:
-            if isinstance(mitigation, Accept):
-                treatment = Treatment.ACCEPTED
-                break
-            if isinstance(mitigation, Mitigation):  # TODO: risk_reduction, state
-                treatment = Treatment.MITIGATED
-                break
-
-        return treatment
-
-    @property
-    def max_average_asset_score(self) -> float:
-        return self._elemet.max_average_asset_score
-
-    def add_mitigations(self, *mitigations: "Mitigation") -> None:
-        for m in mitigations:
-            self._mitigations.add(m)
-
-    def _calculate_severity(self, impact: "Impact", likelihood: "Likelihood") -> "Severity":
-        impact_weights = {Impact.LOW: 1, Impact.MEDIUM: 2,
-                          Impact.HIGH: 3, Impact.VERY_HIGH: 4}
-        likelihood_weights = {Likelihood.UNLIKELY: 1, Likelihood.LIKELY: 2,
-                              Likelihood.VERY_LIKELY: 3, Likelihood.FREQUENT: 4}
-
-        result = likelihood_weights[likelihood] * impact_weights[impact]
-
-        if result <= 1:
-            return Severity.LOW
-
-        if result <= 3:
-            return Severity.MEDIUM
-
-        if result <= 8:
-            return Severity.ELEVATED
-
-        if result <= 12:
-            return Severity.HIGH
-
-        return Severity.CRITICAL
-
-    def __repr__(self) -> str:
-        return "<{0}.{1}({2}) at {3}>".format(
-            self.__module__, type(self).__name__, self.id, hex(id(self))
-        )
-
-    def __str__(self) -> str:
-        return f"'{self.id}': {self.name}\n{self.description}\n{self.severity}"
-
-
-class RiskCalculator:
-    def __init__(
-        self,
-        asset_value_weighting: float = 1,
-        ease_of_exploitation_weighting: float = 1,
-        exposure_weighting: float = 1,
-        business_impact_weighting: float = 1,
-    ) -> None:
-        self._asset_value_weighting = asset_value_weighting
-        self._ease_of_exploitation_weighting = ease_of_exploitation_weighting
-        self._exposure_weighting = exposure_weighting
-        self._business_impact_weighting = business_impact_weighting
-
-    def calculate_risk(self, risk: "Risk") -> None:
-        # TODO inherent -> threat_impact * self._business_impact_weighting / 100 + (risk.max_average_asset_score * self._asset_value_weighting)
-        # return (inherent, current, calculatet)
-        pass

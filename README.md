@@ -14,9 +14,9 @@ python3 tmac.py
 ```python
 #!/usr/bin/env python3
 
-from tmac import (Asset, DataFlow, DataStore, Machine, Model,
-                  Process, Protocol, Score, TableFormat, Technology)
-from tmac.plus import Browser
+from tmac import (Asset, DataFlow, Machine, Model, Process, Protocol, 
+                    Score, TableFormat, Technology)
+from tmac.plus import Browser, Database
 
 model = Model("Login Model")
 
@@ -42,10 +42,9 @@ login.transfers(
     availability=Score.HIGH,
 )
 
-database = DataStore(
+database = Database(
     model, "Database",
     machine=Machine.VIRTUAL,
-    technology=Technology.DATABASE,
 )
 
 authenticate = DataFlow(

@@ -8,7 +8,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.abspath(""), "..")))
 from tmac import (
     Asset,
     DataFlow,
-    DataStore,
     Machine,
     Model,  
     Process,
@@ -17,7 +16,7 @@ from tmac import (
     TableFormat,
     Technology,
 ) # noqa: E402
-from tmac.plus import Browser  # noqa: E402
+from tmac.plus import Browser, Database  # noqa: E402
 
 model = Model("REST Login Model")
 
@@ -39,11 +38,10 @@ login.transfers(
     availability=Score.HIGH,
 )
 
-database = DataStore(
+database = Database(
     model,
     "Database",
     machine=Machine.VIRTUAL,
-    technology=Technology.DATABASE,
 )
 
 authenticate = DataFlow(

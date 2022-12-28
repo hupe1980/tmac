@@ -1,10 +1,11 @@
 from abc import ABCMeta, abstractproperty
-from typing import Any, Set, Optional, List, Dict, TYPE_CHECKING, cast
 from enum import Enum
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, cast
 
 from .data_flow import DataFlow, Protocol
-from .node import Construct
+from .diagram import DiagramNode
 from .element import Element
+from .node import Construct
 from .otm import OpenThreatModelComponent
 from .tag import TagMixin
 
@@ -22,68 +23,28 @@ class MachineMeta(type):
         cls.SERVERLESS: "Machine" = cls("serverless")
 
 
-class Machine(str, metaclass=MachineMeta): # type: ignore[misc] # https://github.com/python/mypy/issues/14033
+class Machine(str, metaclass=MachineMeta):  # type: ignore[misc] # https://github.com/python/mypy/issues/14033
     def __new__(cls, value: str) -> "Machine":
         return super().__new__(cls, value)
 
 
 class Technology(Enum):
     UNKNOWN = "unknown"
-    CLIENT_SYSTEM = "client-system"
+    # client_side
+    CLI = "cli"
     BROWSER = "browser"
     DESKTOP = "desktop"
     MOBILE_APP = "mobile-app"
-    DEVOPS_CLIENT = "devops-client"
-    WEB_SERVER = "web-server"
+    # server_side
     WEB_APPLICATION = "web-application"
-    APPLICATION_SERVER = "application-server"
+    WEB_SERVICE_REST = "web-service-rest"
+    WEB_SERVICE_SOAP = "web-service-soap"
+    WEB_SERVICE_GRAPHQL = "web-service-graphql"
+    LOAD_BALANCER = "load-balancer"
+    # data_store
     DATABASE = "database"
     FILE_SERVER = "file-server"
     LOCAL_FILE_SYSTEM = "local-file-system"
-    ERP = "erp"
-    CMS = "cms"
-    WEB_SERVICE_REST = "web-service-rest"
-    WEB_SERVICE_SOAP = "web-service-soap"
-    EJB = "ejb"
-    SEARCH_INDEX = "search-index"
-    SEARCH_ENGINE = "search-engine"
-    SERVICE_REGISTRY = "service-registry"
-    REVERSE_PROXY = "reverse-proxy"
-    LOAD_BALANCER = "load-balancer"
-    BUILD_PIPELINE = "build-pipeline"
-    SOURCECODE_REPOSITORY = "sourcecode-repository"
-    ARTIFACT_REGISTRY = "artifact-registry"
-    CODE_INSPECTION_PLATFORM = "code-inspection-platform"
-    MONITORING = "monitoring"
-    LDAP_SERVER = "ldap-server"
-    CONTAINER_PLATFORM = "container-platform"
-    BATCH_PROCESSING = "batch-processing"
-    EVENT_LISTENER = "event-listener"
-    IDENTITIY_PROVIDER = "identity-provider"
-    IDENTITY_STORE_LDAP = "identity-store-ldap"
-    IDENTITY_STORE_DATABASE = "identity-store-database"
-    TOOL = "tool"
-    CLI = "cli"
-    TASK = "task"
-    FUNCTION = "function"
-    GATEWAY = "gateway"
-    IOT_DEVICE = "iot-device"
-    MESSAGE_QUEUE = "message-queue"
-    STREAM_PROCESSING = "stream-processing"
-    SERVICE_MESH = "service-mesh"
-    DATA_LAKE = "data-lake"
-    REPORT_ENGINE = "report-engine"
-    AI = "ai"
-    MAIL_SERVER = "mail-server"
-    VAULT = "vault"
-    HSM = "hsm"
-    WAF = "waf"
-    IDS = "ids"
-    IPS = "ips"
-    SCHEDULER = "scheduler"
-    MAINFRAME = "mainframe"
-    BLOCK_STORAGE = "block-storage"
-    LIBRARY = "library"
 
     def __str__(self) -> str:
         return str(self.value)
@@ -117,9 +78,10 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
         scope: Construct,
         name: str,
         *,
-        machine: Machine,
         technology: Technology,
+        machine: Machine = Machine.UNKNOWN,
         description: str = "",
+        vendor: str = "",
         trust_boundary: Optional["TrustBoundary"] = None,
         uses_environment_variables: bool = False,
         human_use: bool = False,
@@ -137,15 +99,15 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
         self.trust_boundary = trust_boundary
         self.machine = machine
         self.technology = technology
+        self.vendor = vendor
         self.human_use = human_use
         self.internet_facing = internet_facing
         self.encryption = encryption
         self.multi_tenant = multi_tenant
         self.redundant = redundant
         self.custom_developed_parts = custom_developed_parts
-        self.accept_data_formats = accept_data_formats
-        self.overwrite_node_attrs = overwrite_node_attrs
-
+        self.accept_data_formats = set(accept_data_formats)
+        self._overwrite_node_attrs = overwrite_node_attrs
         self._out_of_scope = out_of_scope
         self._uses_environment_variables = uses_environment_variables
 
@@ -153,9 +115,9 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
         self._assets_stored: Set["Asset"] = set()
 
     @abstractproperty
-    def shape(self) -> str:
+    def diagram_node(self) -> "DiagramNode":
         pass
-    
+
     @property
     def out_of_scope(self) -> bool:
         return self._out_of_scope
@@ -200,6 +162,8 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
     def processes(self, *assets: "Asset") -> None:
         for asset in assets:
             self._assets_processed.add(asset)
+            if isinstance(self, DataStore):
+                self._assets_stored.add(asset)
 
     def stores(self, *assets: "Asset", skip_process: bool = False) -> None:
         for asset in assets:
@@ -207,24 +171,16 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
             if not skip_process:
                 self._assets_processed.add(asset)
 
-    def is_using_environment_variables(self) -> bool:
-        return self._uses_environment_variables
-
     def is_web_application(self) -> bool:
         return self.technology in [
-            Technology.WEB_SERVER,
             Technology.WEB_APPLICATION,
-            Technology.APPLICATION_SERVER,
-            Technology.ERP,
-            Technology.CMS,
-            Technology.IDENTITIY_PROVIDER,
-            Technology.REPORT_ENGINE,
         ]
 
     def is_web_service(self) -> bool:
         return self.technology in [
             Technology.WEB_SERVICE_REST,
             Technology.WEB_SERVICE_SOAP,
+            Technology.WEB_SERVICE_GRAPHQL,
         ]
 
 
@@ -235,9 +191,8 @@ class ExternalEntity(Component):
         super().__init__(scope, name, out_of_scope=True, **kwargs)
 
     @property
-    def shape(self) -> str:
-        return "box"
-
+    def diagram_node(self) -> "DiagramNode":
+        return DiagramNode.from_attr(self.id, self.name, shape="box", labeljust="c", labelloc="c", **self._overwrite_node_attrs)
 
 class Process(Component):
     """Task that receives, modifies, or redirects input to output."""
@@ -246,8 +201,8 @@ class Process(Component):
         super().__init__(scope, name, **kwargs)
 
     @property
-    def shape(self) -> str:
-        return "circle"
+    def diagram_node(self) -> "DiagramNode":
+        return DiagramNode.from_attr(self.id, self.name, shape="circle", labeljust="c", labelloc="c", **self._overwrite_node_attrs)
 
 
 class DataStore(Component):
@@ -257,5 +212,5 @@ class DataStore(Component):
         super().__init__(scope, name, **kwargs)
 
     @property
-    def shape(self) -> str:
-        return "cylinder"
+    def diagram_node(self) -> "DiagramNode":
+        return DiagramNode.from_attr(self.id, self.name, shape="cylinder", labeljust="c", labelloc="c", **self._overwrite_node_attrs)
