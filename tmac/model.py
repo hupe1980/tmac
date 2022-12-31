@@ -1,5 +1,5 @@
 import os
-from typing import TYPE_CHECKING, Dict, List, Optional, Set, Iterable, cast
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, cast
 
 from jinja2 import Template
 from tabulate import tabulate
@@ -17,6 +17,7 @@ from .threat_library import (
     DEFAULT_THREAT_LIBRARY,
     DEFAULT_USER_STORY_TEMPLATE_REPOSITORY,
 )
+from .trust_boundary import TrustBoundary
 from .user_story import UserStoryTemplateRepository
 
 if TYPE_CHECKING:
@@ -99,6 +100,13 @@ class Model(Construct, TagMixin):
         )
 
     @property
+    def trust_boundaries(self) -> List["TrustBoundary"]:
+        return cast(
+            List["TrustBoundary"],
+            list(filter(lambda c: isinstance(c, TrustBoundary), self.node.find_all())),
+        )
+
+    @property
     def risks(self) -> List["Risk"]:
         if self.auto_evaluate:
             self.evaluate()
@@ -155,12 +163,15 @@ class Model(Construct, TagMixin):
         for user_story in self.user_stories:
             table.append([user_story.id, user_story.text])
 
-        maxcolwodths: Optional[Iterable[int | None]]=[None, 80]
+        maxcolwodths: Optional[Iterable[int | None]] = [None, 80]
         if table_format == TableFormat.GITHUB:
             maxcolwodths = None
 
         return tabulate(
-            table, headers=headers, tablefmt=str(table_format), maxcolwidths=maxcolwodths
+            table,
+            headers=headers,
+            tablefmt=str(table_format),
+            maxcolwidths=maxcolwodths,
         )
 
     def create_report(self) -> None:
@@ -183,7 +194,12 @@ class Model(Construct, TagMixin):
             hide_data_flow_labels=hide_data_flow_labels,
         )
         for c in self.components:
-            diagram.add_node(c.diagram_node)
+            if c.trust_boundary is None:
+                diagram.add_node(c.diagram_node)
+
+        for tb in self.trust_boundaries:
+            if tb.trust_boundary is None:
+                diagram.add_cluster(tb.diagram_cluster)
 
         for df in self.data_flows:
             diagram.add_edge(df.diagram_edge)

@@ -77,7 +77,7 @@ class CAPEC_664(ComponentThreat):
             prerequisites=[
                 "Server must be running a web application that processes HTTP requests.",
             ],
-            risk_text="Server Side Request Forgery (SSRF) risk at {{ component.name }}",
+            risk_text="Server Side Request Forgery (SSRF) risk at {{ component.name }} requesting the target {{ data_flow.destination.name }} via {{ data_flow.name }}.",
             stride=Stride.INFORMATION_DISCLOSURE,
             cwe_ids=[918, 20],
             references=["https://capec.mitre.org/data/definitions/664.html"],
@@ -91,8 +91,8 @@ class CAPEC_664(ComponentThreat):
         for flow in component.outgoing_flows:
             if flow.is_web_access_protocol:
                 risks.append(
-                    ComponentRisk(self, component=component, model=model)
-                )  # TODO Rist List
+                    ComponentRisk(self, component=component, data_flow=flow, model=model)
+                ) 
 
         return risks
 

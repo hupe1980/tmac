@@ -1,7 +1,20 @@
-from typing import Dict, Optional, Set, Type
+from typing import Dict, Optional, Set, Type, List
 
-from diagrams import Diagram, Edge, Node
+from diagrams import Diagram, Edge, Node, Cluster
 
+
+class DiagramCluster:
+    def __init__(self, label: str, nodes: List["DiagramNode"], clusters: List["DiagramCluster"]) -> None:
+        self._label = label
+        self._nodes = nodes
+        self._clusters = clusters
+
+    def render(self, nodes: Dict[str, "Node"]) -> None:
+        with Cluster(self._label):
+            for n in self._nodes:
+                n.render(nodes)
+            for cluster in self._clusters:
+                cluster.render(nodes)
 
 class DiagramEdge:
     def __init__(
@@ -56,11 +69,13 @@ class DiagramNode:
     ) -> "DiagramNode":
         return cls(id, label, node_type=node_type, overwrites=overwrites)
 
-    def render(self) -> "Node":
+    def render(self, nodes: Dict[str, "Node"]) -> None:
         if self._node_type is not None:
-            return self._node_type(self._label, nodeid=self.id, **self._overwrites)
-
-        return Node(self._label, nodeid=self.id, **self._overwrites)
+            node = self._node_type(self._label, nodeid=self.id, **self._overwrites)
+            nodes[node.nodeid] = node
+        else:
+            node = Node(self._label, nodeid=self.id, **self._overwrites)
+            nodes[node.nodeid] = node
 
 
 class DataFlowDiagram:
@@ -71,8 +86,13 @@ class DataFlowDiagram:
 
         self._is_notebook = is_notebook
         self._hide_data_flow_labels = hide_data_flow_labels
+        
+        self._clusters: Set["DiagramCluster"] = set()
         self._nodes: Dict[str, "DiagramNode"] = dict()
         self._edges: Set["DiagramEdge"] = set()
+
+    def add_cluster(self, cluster: "DiagramCluster") -> None:
+        self._clusters.add(cluster)
 
     def add_node(self, node: "DiagramNode") -> None:
         self._nodes[node.id] = node
@@ -91,8 +111,10 @@ class DataFlowDiagram:
             nodes: Dict[str, "Node"] = dict()
 
             for n in self._nodes.values():
-                node = n.render()
-                nodes[node.nodeid] = node
+                n.render(nodes)
+
+            for c in self._clusters:
+                c.render(nodes)
 
             for f in self._edges:
                 f.render(nodes)

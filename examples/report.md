@@ -14,9 +14,9 @@
 ## User Stories
 |ID|User Story|
 |---|---|
+|[ASVS-5.1.3@CAPEC-63@WebServer](#asvs-513capec-63webserver)|As a Security Champion I want all of the input which can affect control or data flow to be validated so that I can protect my application from malicious manipulation which could lead to unauthorised disclosure or loss of integrity.|
 |[ASVS-5.3.3@CAPEC-63@WebServer](#asvs-533capec-63webserver)|As a Security Champion I want all of the output to be escaped so that I can protect my application against reflected, stored, and DOM based XSS.|
 |[ASVS-5.3.4@CAPEC-66@WebServer@DatabaseTraffic](#asvs-534capec-66webserverdatabasetraffic)|As a Security Champion I want all data selection or database queries use parameterized queries so that my application is protected against database injection attacks.|
-|[ASVS-5.1.3@CAPEC-63@WebServer](#asvs-513capec-63webserver)|As a Security Champion I want all of the input which can affect control or data flow to be validated so that I can protect my application from malicious manipulation which could lead to unauthorised disclosure or loss of integrity.|
 
 
 ## Risk Details
@@ -61,6 +61,19 @@ This attack exploits target software that constructs SQL statements based on use
 
 
 ## User Story Details
+### ASVS-5.1.3@CAPEC-63@WebServer
+Verify that all input (HTML form fields, REST requests, URL parameters, HTTP headers, cookies, batch files, RSS feeds, etc) is validated using positive validation (allow lists).
+
+**Feature Name**: Proper Input Validation
+
+**User Story**:\
+As a Security Champion I want all of the input which can affect control or data flow to be validated so that I can protect my application from malicious manipulation which could lead to unauthorised disclosure or loss of integrity.
+
+**References**:
+- https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html
+- https://cwe.mitre.org/data/definitions/20.html
+
+---
 ### ASVS-5.3.4@CAPEC-66@WebServer@DatabaseTraffic
 Verify that data selection or database queries (e.g. SQL, HQL, ORM, NoSQL) use parameterized queries, ORMs, entity frameworks, or are otherwise protected from database injection attacks.
 
@@ -85,18 +98,5 @@ As a Security Champion I want all of the output to be escaped so that I can prot
 **References**:
 - https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html
 - https://cwe.mitre.org/data/definitions/79.html
-
----
-### ASVS-5.1.3@CAPEC-63@WebServer
-Verify that all input (HTML form fields, REST requests, URL parameters, HTTP headers, cookies, batch files, RSS feeds, etc) is validated using positive validation (allow lists).
-
-**Feature Name**: Proper Input Validation
-
-**User Story**:\
-As a Security Champion I want all of the input which can affect control or data flow to be validated so that I can protect my application from malicious manipulation which could lead to unauthorised disclosure or loss of integrity.
-
-**References**:
-- https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html
-- https://cwe.mitre.org/data/definitions/20.html
 
 ---

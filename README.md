@@ -103,7 +103,7 @@ alb = ApplicationLoadBalancer(model, "ALB", waf=True)
 
 ```
 
-## Custom threatlib
+## Custom ThreatLibrary
 ```python
 from tmac import Model, ThreatLibrary
 
