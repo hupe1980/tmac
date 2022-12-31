@@ -8,14 +8,14 @@
 |ID|Risk|
 |---|---|
 {% for risk in model.risks -%}
-|[{{ risk.id }}](#{{ risk.id|lower }})|{{ risk.text }}|
+|[{{ risk.id }}](#{{ risk.id|lower|replace("@", "") }})|{{ risk.text }}|
 {% endfor %}
 
 ## User Stories
 |ID|User Story|
 |---|---|
 {% for story in model.user_stories -%}
-|[{{ story.id }}](#{{ story.id|lower }})|{{ story.text }}|
+|[{{ story.id }}](#{{ story.id|lower|replace("@", "") }})|{{ story.text }}|
 {% endfor %}
 
 ## Risk Details
@@ -32,7 +32,7 @@
 
 **Mitigations**:
 {% for story in risk.user_stories -%}
-- {{ story.feature_name }}: [{{ story.id }}](#{{ story.id|lower}})
+- {{ story.feature_name }}: [{{ story.id }}](#{{ story.id|lower|replace("@", "") }})
 {% endfor %}
 **References**:
 {% for reference in risk.references -%}

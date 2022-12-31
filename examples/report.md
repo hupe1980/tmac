@@ -7,16 +7,16 @@
 ## Potential Risks
 |ID|Risk|
 |---|---|
-|[CAPEC-63@WebServer](#capec-63@webserver)|Cross-Site Scripting (XSS) risk at WebServer|
-|[CAPEC-66@WebServer@DatabaseTraffic](#capec-66@webserver@databasetraffic)|SQL Injection risk at WebServer against database Database via DatabaseTraffic|
+|[CAPEC-63@WebServer](#capec-63webserver)|Cross-Site Scripting (XSS) risk at WebServer|
+|[CAPEC-66@WebServer@DatabaseTraffic](#capec-66webserverdatabasetraffic)|SQL Injection risk at WebServer against database Database via DatabaseTraffic|
 
 
 ## User Stories
 |ID|User Story|
 |---|---|
-|[ASVS-5.1.3@CAPEC-63@WebServer](#asvs-5.1.3@capec-63@webserver)|As a Security Champion I want all of the input which can affect control or data flow to be validated so that I can protect my application from malicious manipulation which could lead to unauthorised disclosure or loss of integrity.|
-|[ASVS-5.3.3@CAPEC-63@WebServer](#asvs-5.3.3@capec-63@webserver)|As a Security Champion I want all of the output to be escaped so that I can protect my application against reflected, stored, and DOM based XSS.|
-|[ASVS-5.3.4@CAPEC-66@WebServer@DatabaseTraffic](#asvs-5.3.4@capec-66@webserver@databasetraffic)|As a Security Champion I want all data selection or database queries use parameterized queries so that my application is protected against database injection attacks.|
+|[ASVS-5.1.3@CAPEC-63@WebServer](#asvs-5.1.3capec-63webserver)|As a Security Champion I want all of the input which can affect control or data flow to be validated so that I can protect my application from malicious manipulation which could lead to unauthorised disclosure or loss of integrity.|
+|[ASVS-5.3.4@CAPEC-66@WebServer@DatabaseTraffic](#asvs-5.3.4capec-66webserverdatabasetraffic)|As a Security Champion I want all data selection or database queries use parameterized queries so that my application is protected against database injection attacks.|
+|[ASVS-5.3.3@CAPEC-63@WebServer](#asvs-5.3.3capec-63webserver)|As a Security Champion I want all of the output to be escaped so that I can protect my application against reflected, stored, and DOM based XSS.|
 
 
 ## Risk Details
@@ -30,8 +30,8 @@ An adversary embeds malicious scripts in content that will be served to web brow
 ⚠ Cross-Site Scripting (XSS) risk at WebServer
 
 **Mitigations**:
-- Output Escaping: [ASVS-5.3.3@CAPEC-63@WebServer](#asvs-5.3.3@capec-63@webserver)
-- Proper Input Validation: [ASVS-5.1.3@CAPEC-63@WebServer](#asvs-5.1.3@capec-63@webserver)
+- Proper Input Validation: [ASVS-5.1.3@CAPEC-63@WebServer](#asvs-5.1.3capec-63webserver)
+- Output Escaping: [ASVS-5.3.3@CAPEC-63@WebServer](#asvs-5.3.3capec-63webserver)
 
 **References**:
 - https://capec.mitre.org/data/definitions/63.html
@@ -50,7 +50,7 @@ This attack exploits target software that constructs SQL statements based on use
 ⚠ SQL Injection risk at WebServer against database Database via DatabaseTraffic
 
 **Mitigations**:
-- Parameterized Queries: [ASVS-5.3.4@CAPEC-66@WebServer@DatabaseTraffic](#asvs-5.3.4@capec-66@webserver@databasetraffic)
+- Parameterized Queries: [ASVS-5.3.4@CAPEC-66@WebServer@DatabaseTraffic](#asvs-5.3.4capec-66webserverdatabasetraffic)
 
 **References**:
 - https://capec.mitre.org/data/definitions/66.html
@@ -61,18 +61,18 @@ This attack exploits target software that constructs SQL statements based on use
 
 
 ## User Story Details
-### ASVS-5.1.3@CAPEC-63@WebServer
-Verify that all input (HTML form fields, REST requests, URL parameters, HTTP headers, cookies, batch files, RSS feeds, etc) is validated using positive validation (allow lists).
+### ASVS-5.3.3@CAPEC-63@WebServer
+Verify that context-aware, preferably automated - or at worst, manual - output escaping protects against reflected, stored, and DOM based XSS
 
 #### User Story
-**Feature Name**: Proper Input Validation
+**Feature Name**: Output Escaping
 
 **Story**:\
-As a Security Champion I want all of the input which can affect control or data flow to be validated so that I can protect my application from malicious manipulation which could lead to unauthorised disclosure or loss of integrity.
+As a Security Champion I want all of the output to be escaped so that I can protect my application against reflected, stored, and DOM based XSS.
 
 **References**:
-- https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html
-- https://cwe.mitre.org/data/definitions/20.html
+- https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html
+- https://cwe.mitre.org/data/definitions/79.html
 
 ---
 ### ASVS-5.3.4@CAPEC-66@WebServer@DatabaseTraffic
@@ -89,17 +89,17 @@ As a Security Champion I want all data selection or database queries use paramet
 - https://cwe.mitre.org/data/definitions/89.html
 
 ---
-### ASVS-5.3.3@CAPEC-63@WebServer
-Verify that context-aware, preferably automated - or at worst, manual - output escaping protects against reflected, stored, and DOM based XSS
+### ASVS-5.1.3@CAPEC-63@WebServer
+Verify that all input (HTML form fields, REST requests, URL parameters, HTTP headers, cookies, batch files, RSS feeds, etc) is validated using positive validation (allow lists).
 
 #### User Story
-**Feature Name**: Output Escaping
+**Feature Name**: Proper Input Validation
 
 **Story**:\
-As a Security Champion I want all of the output to be escaped so that I can protect my application against reflected, stored, and DOM based XSS.
+As a Security Champion I want all of the input which can affect control or data flow to be validated so that I can protect my application from malicious manipulation which could lead to unauthorised disclosure or loss of integrity.
 
 **References**:
-- https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html
-- https://cwe.mitre.org/data/definitions/79.html
+- https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html
+- https://cwe.mitre.org/data/definitions/20.html
 
 ---
