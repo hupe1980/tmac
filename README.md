@@ -88,7 +88,7 @@ Output:
 
 ## Generating Diagrams
 ```python
-model.data_flow_diagram()
+model.create_data_flow_diagram()
 ```
 ![threatbook.png](https://github.com/hupe1980/tmac/raw/main/.assets/data-flow-diagram.png)
 

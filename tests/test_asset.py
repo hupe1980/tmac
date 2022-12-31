@@ -1,9 +1,9 @@
-from tmac import Asset, Construct, Score
+from tmac import Asset, Model, Score
 
 
-def test_average_asset_score(root: "Construct") -> None:
+def test_average_asset_score(model: "Model") -> None:
     foo = Asset(
-        root,
+        model,
         "Foo",
         confidentiality=Score(20),
         integrity=Score(10),

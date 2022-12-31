@@ -73,13 +73,22 @@ class DataFormat(Enum):
     def __str__(self) -> str:
         return str(self.value)
 
+
 class Component(Element, TagMixin, metaclass=ABCMeta):
-    def __init__(self, scope: Construct, name: str, description: str = ""):
+    def __init__(
+        self,
+        scope: Construct,
+        name: str,
+        description: str = "",
+        trust_boundary: Optional["TrustBoundary"] = None,
+    ):
         super().__init__(scope, name, description)
+
+        self.trust_boundary = trust_boundary
 
         self._assets_processed: Set["Asset"] = set()
         self._assets_stored: Set["Asset"] = set()
-    
+
     @abstractproperty
     def diagram_node(self) -> "DiagramNode":
         pass
@@ -135,21 +144,25 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
             if not skip_process:
                 self._assets_processed.add(asset)
 
+
 class Actor(Component):
     def __init__(
-        self, 
-        scope: Construct, 
+        self,
+        scope: Construct,
         name: str,
         *,
         is_human: bool = False,
         description: str = "",
+        trust_boundary: Optional["TrustBoundary"] = None,
         overwrite_node_attrs: Dict[str, str] = dict(),
     ):
-        super().__init__(scope, name, description)
+        super().__init__(
+            scope, name, description=description, trust_boundary=trust_boundary
+        )
 
         self.is_human = is_human
         self._overwrite_node_attrs = overwrite_node_attrs
-    
+
     @property
     def diagram_node(self) -> "DiagramNode":
         return DiagramNode.from_attr(
@@ -195,7 +208,9 @@ class TechnicalComponent(Component):
         out_of_scope: bool = False,
         overwrite_node_attrs: Dict[str, str] = dict(),
     ):
-        super().__init__(scope, name, description=description)
+        super().__init__(
+            scope, name, description=description, trust_boundary=trust_boundary
+        )
 
         self.trust_boundary = trust_boundary
         self.machine = machine

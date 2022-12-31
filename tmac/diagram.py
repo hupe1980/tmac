@@ -3,7 +3,6 @@ from typing import Dict, Optional, Set, Type
 from diagrams import Diagram, Edge, Node
 
 
-
 class DiagramEdge:
     def __init__(
         self,

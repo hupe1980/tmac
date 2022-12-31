@@ -1,46 +1,63 @@
 from .asset import Asset
-from .component import (Component, DataFormat, DataStore, ExternalEntity,
-                        Machine, Process, Technology)
+from .component import (
+    Actor,
+    Component,
+    DataFormat,
+    DataStore,
+    Encryption,
+    ExternalEntity,
+    Machine,
+    Process,
+    TechnicalComponent,
+    Technology,
+)
 from .data_flow import Authentication, Authorization, DataFlow, Protocol
+from .diagram import DataFlowDiagram, DiagramEdge, DiagramNode
 from .element import Element
-from .model import Model
+from .model import Model, ModelException
 from .node import Construct
-#from .risk import Impact, Likelihood, Risk, Severity, Treatment
+from .risk import Risk
 from .score import Score
 from .table_format import TableFormat
 from .tag import TagMixin
-#from .threat import AttackCategory, Threat, Threatlib
-#from .threatlib import DEFAULT_THREATLIB
+from .threat import BaseThreat, ComponentThreat, ModelThreat, Stride, ThreatLibrary
 from .trust_boundary import TrustBoundary
+from .user_story import UserStory, UserStoryTemplate, UserStoryTemplateRepository
 
 __all__ = (
     "Asset",
-    "AttackCategory",
-    "Protocol",
+    "Actor",
+    "Component",
+    "DataFormat",
+    "DataStore",
+    "Encryption",
+    "ExternalEntity",
+    "Machine",
+    "Process",
+    "TechnicalComponent",
+    "Technology",
     "Authentication",
     "Authorization",
     "DataFlow",
+    "Protocol",
+    "DataFlowDiagram",
+    "DiagramEdge",
+    "DiagramNode",
     "Element",
-    "Mitigation",
-    "Likelihood",
-    "Severity",
-    "Impact",
-    "Treatment",
-    "Risk",
     "Model",
+    "ModelException",
     "Construct",
+    "Risk",
     "Score",
     "TableFormat",
     "TagMixin",
-    "Machine",
-    "Technology",
-    "DataFormat",
-    "Component",
-    "ExternalEntity",
-    "Process",
-    "DataStore",
+    "BaseThreat",
+    "ComponentThreat",
+    "ModelThreat",
+    "Stride",
+    "ThreatLibrary",
     "TrustBoundary",
-    "Threat",
-    "Threatlib",
-    "DEFAULT_THREATLIB",
+    "UserStory",
+    "UserStoryTemplate",
+    "UserStoryTemplateRepository",
 )
