@@ -6,7 +6,7 @@
 
 ## Potential Risks
 |ID|Risk|
-|---|---|---|
+|---|---|
 {% for risk in model.risks -%}
 |{{ risk.id }}|{{ risk.text }}|
 {% endfor %}
