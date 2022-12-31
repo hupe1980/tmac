@@ -46,10 +46,9 @@
 ### {{ story.id }}
 {{ story.description }}
 
-#### User Story
 **Feature Name**: {{ story.feature_name}}
 
-**Story**:\
+**User Story**:\
 {{ story.text }}
 
 **References**:

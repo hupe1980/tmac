@@ -105,13 +105,13 @@ alb = ApplicationLoadBalancer(model, "ALB", waf=True)
 
 ## Custom threatlib
 ```python
-from tmac import Model, Threatlib
+from tmac import Model, ThreatLibrary
 
-threatlib = Threatlib()
+lib = ThreatLibrary()
 
-threatlib.add_threat("""... your custom threats ...""")
+lib.add_threat("""... your custom threats ...""")
 
-model = Model("Demo Model", threatlib=threatlib)
+model = Model("Demo Model", threat_library=lib)
 ```
 ## Examples
 
