@@ -1,8 +1,7 @@
-from typing import Dict, Set, Optional, Type
-from diagrams import Diagram, Node, Edge
-from diagrams.aws.compute import EC2
-from diagrams.aws.database import RDS
-from diagrams.aws.network import ELB
+from typing import Dict, Optional, Set, Type
+
+from diagrams import Diagram, Edge, Node
+
 
 
 class DiagramEdge:
@@ -40,7 +39,6 @@ class DiagramNode:
         id: str,
         label: str,
         *,
-        shape: str = "",
         node_type: Optional[Type["Node"]] = None,
         overwrites: Dict[str, str] = dict(),
     ) -> None:
@@ -50,9 +48,7 @@ class DiagramNode:
         self._overwrites = overwrites
 
     @classmethod
-    def from_attr(
-        cls, id: str, label: str, **overwrites: str
-    ) -> "DiagramNode":
+    def from_attr(cls, id: str, label: str, **overwrites: str) -> "DiagramNode":
         return cls(id, label, overwrites=overwrites)
 
     @classmethod
@@ -88,10 +84,10 @@ class DataFlowDiagram:
     def show(self) -> None:
         return self._render(show=True)
 
-    def save(self, filename: str="dfd") -> None:
+    def save(self, filename: str = "dfd") -> None:
         return self._render(show=False, filename=filename)
 
-    def _render(self, show: bool, filename: str="dfd") -> None:
+    def _render(self, show: bool, filename: str = "dfd") -> None:
         with Diagram(show=show, filename=filename) as diagram:
             nodes: Dict[str, "Node"] = dict()
 

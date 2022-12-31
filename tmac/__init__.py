@@ -3,15 +3,14 @@ from .component import (Component, DataFormat, DataStore, ExternalEntity,
                         Machine, Process, Technology)
 from .data_flow import Authentication, Authorization, DataFlow, Protocol
 from .element import Element
-from .mitigation import Mitigation
 from .model import Model
 from .node import Construct
-from .risk import Impact, Likelihood, Risk, Severity, Treatment
+#from .risk import Impact, Likelihood, Risk, Severity, Treatment
 from .score import Score
 from .table_format import TableFormat
 from .tag import TagMixin
-from .threat import AttackCategory, Threat, Threatlib
-from .threatlib import DEFAULT_THREATLIB
+#from .threat import AttackCategory, Threat, Threatlib
+#from .threatlib import DEFAULT_THREATLIB
 from .trust_boundary import TrustBoundary
 
 __all__ = (

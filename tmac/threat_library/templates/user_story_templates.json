@@ -1,0 +1,29 @@
+[
+    {
+        "id": "ASVS-5.1.3",
+        "category": "Output Encoding and Injection Prevention",
+        "feature_name": "Proper Input Validation",
+        "description": "Verify that all input (HTML form fields, REST requests, URL parameters, HTTP headers, cookies, batch files, RSS feeds, etc) is validated using positive validation (allow lists).",
+        "text": "As a Security Champion I want all of the input which can affect control or data flow to be validated so that I can protect my application from malicious manipulation which could lead to unauthorised disclosure or loss of integrity.",
+        "cheat_sheet": "https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html",
+        "cwe_id": 20
+    },
+    {
+        "id": "ASVS-5.3.3",
+        "category": "Output Encoding and Injection Prevention",
+        "feature_name": "Output Escaping",
+        "description": "Verify that context-aware, preferably automated - or at worst, manual - output escaping protects against reflected, stored, and DOM based XSS",
+        "text": "As a Security Champion I want all of the output to be escaped so that I can protect my application against reflected, stored, and DOM based XSS.",
+        "cheat_sheet": "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html",
+        "cwe_id": 79
+    },
+    {
+        "id": "ASVS-5.3.4",
+        "category": "Output Encoding and Injection Prevention",
+        "feature_name": "Parameterized Queries",
+        "description": "Verify that data selection or database queries (e.g. SQL, HQL, ORM, NoSQL) use parameterized queries, ORMs, entity frameworks, or are otherwise protected from database injection attacks.",
+        "text": "As a Security Champion I want all data selection or database queries use parameterized queries so that my application is protected against database injection attacks.",
+        "cheat_sheet": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html",
+        "cwe_id": 89
+    }
+]

@@ -1,14 +1,11 @@
-from abc import ABCMeta, abstractproperty
+from abc import ABCMeta, abstractproperty, abstractmethod
 from typing import List, TYPE_CHECKING
-from tabulate import tabulate
 
-from .id import unique_id
-from .node import Construct
-from .table_format import TableFormat
+from .node import Construct, unique_id
 
 
 if TYPE_CHECKING:
-    from .risk import Risk
+    pass
     
 
 class Element(Construct, metaclass=ABCMeta):
@@ -19,6 +16,7 @@ class Element(Construct, metaclass=ABCMeta):
 
         self.name = name
         self.description = description
+        self.out_of_scope = False
 
         # import when need to avoid circular import
         from .model import Model
@@ -26,31 +24,5 @@ class Element(Construct, metaclass=ABCMeta):
 
         self.node.add_validation(self.validate)
 
-    @abstractproperty
-    def out_of_scope(self) -> bool:
-        pass
-
-    @abstractproperty
-    def max_average_asset_score(self) -> float:
-        pass
-
-    @property
-    def risks(self) -> List["Risk"]:
-        threatlib = self._model.threatlib
-        return threatlib.apply(self)
-
     def validate(self) -> List[str]:
         return [] 
-
-    def get_risk_by_id(self, id: str) -> "Risk":
-        return [risk for risk in self.risks if risk.id == id][0]
-
-    def risks_table(self, table_format: "TableFormat" = TableFormat.SIMPLE) -> str:
-        headers = ["SID", "Severity", "Category", "Threat", "Treatment"]
-        table = []
-
-        for risk in self.risks:
-            table.append([risk.id, risk.severity, risk.category,
-                         risk.name, risk.treatment])
-
-        return tabulate(table, headers=headers, tablefmt=str(table_format))

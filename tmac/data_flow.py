@@ -13,41 +13,6 @@ if TYPE_CHECKING:
     from .component import Component
 
 
-# class Classification(OrderedEnum):
-#     UNKNOWN = 0
-
-#     PUBLIC = 1
-#     """This type of data is freely accessible to the public (i.e. all employees/company personnel).
-#     It can be freely used, reused, and redistributed without repercussions. An example might be
-#     first and last names, job descriptions, or press releases"""
-
-#     INTERNAL_ONLY = 2
-#     """This type of data is strictly accessible to internal company personnel or internal employees
-#     who are granted access. This might include internal-only memos or other communications, business
-#     plans, etc."""
-
-#     CONFIDENTIAL = 3
-#     """Access to confidential data requires specific authorization and/or clearance. Types of confidential
-#     data might include Social Security numbers, cardholder data, M&A documents, and more. Usually, confidential
-#     data is protected by laws like HIPAA and the PCI DSS."""
-
-#     RESTRICTED = 4
-#     """Restricted data includes data that, if compromised or accessed without authorization, which could lead
-#     to criminal charges and massive legal fines or cause irreparable damage to the company. Examples of restricted
-#     data might include proprietary information or research and data protected by state and federal regulations."""
-
-#     def __str__(self) -> str:
-#         value_map = {
-#             "0": "Unknown class",
-#             "1": "Public",
-#             "2": "Internal-only",
-#             "3": "Confidential",
-#             "4": "Restricted"
-#         }
-
-#         return value_map[str(self.value)]
-
-
 class Protocol(Enum):
     UNKNOEN = "unknown-protocol"
     HTTP = "http"
@@ -86,14 +51,6 @@ class Protocol(Enum):
     SMB = "smb"
     SMB_ENCRYPTED = "smb-encrypted"
     LOCAL_FILE_ACCESS = "local-file-access"
-    NRPE = "nrpe"
-    XMPP = "xmpp"
-    IIOP = "iiop"
-    IIOP_ENCRYPTED = "iiop-encrypted"
-    JRMP = "jrmp"
-    JRMP_ENCRYPTED = "jrmp-encrypted"
-    IN_PROCESS_LIBRARY_CALL = "in-process-library-call"
-    CONTAINER_SPAWNING = "container-spawning"
 
     def __str__(self) -> str:
         return str(self.value)
@@ -125,7 +82,10 @@ class DataFlow(Element, TagMixin):
     """Asset transfers between processes, data stores, and external entities"""
 
     def __init__(
-        self, scope: Construct, name: str, *,
+        self,
+        scope: Construct,
+        name: str,
+        *,
         source: "Component",
         destination: "Component",
         protocol: Protocol,
@@ -135,7 +95,7 @@ class DataFlow(Element, TagMixin):
         bidirectional: bool = False,
         authentication: Authentication = Authentication.NONE,
         authorization: Authorization = Authorization.NONE,
-        overwrite_edge_attrs: Dict[str, str] = dict()
+        overwrite_edge_attrs: Dict[str, str] = dict(),
     ):
         """
         Constructs all the necessary attributes for the data_flow object.
@@ -156,13 +116,9 @@ class DataFlow(Element, TagMixin):
         self.bidirectional = bidirectional
         self.authentication = authentication
         self.authorization = authorization
-        
+
         self._overwrite_edge_attrs = overwrite_edge_attrs
         self._assets: Set["Asset"] = set()
-
-    @property
-    def out_of_scope(self) -> bool:
-        return self.source.out_of_scope and self.destination.out_of_scope
 
     @property
     def assets(self) -> Set["Asset"]:
@@ -183,20 +139,26 @@ class DataFlow(Element, TagMixin):
             tags=self.tags,
             bidirectional=self.bidirectional,
             assets=[a.id for a in self._assets],
-            threats=[OpenThreatModelThreatInstance(
-                r.id, str(r.treatment)) for r in self.risks],
+            # threats=[OpenThreatModelThreatInstance(
+            #     r.id, str(r.treatment)) for r in self.risks],
             attributes={
                 "protocol": str(self.protocol),
                 "vpn": str(self.vpn),
                 "readonly": str(self.readonly),
                 "authentication": str(self.authentication),
                 "authorization": str(self.authorization),
-            }
+            },
         )
 
     @property
-    def diagram_edge(self)-> "DiagramEdge":
-        return DiagramEdge(self.source.id, self.destination.id, label=f"{self.protocol}: {self.name}", bidirectional=self.bidirectional, **self._overwrite_edge_attrs)
+    def diagram_edge(self) -> "DiagramEdge":
+        return DiagramEdge(
+            self.source.id,
+            self.destination.id,
+            label=f"{self.protocol}: {self.name}",
+            bidirectional=self.bidirectional,
+            **self._overwrite_edge_attrs,
+        )
 
     def validate(self) -> List[str]:
         if len(self.assets) == 0:
@@ -208,26 +170,46 @@ class DataFlow(Element, TagMixin):
         ...
 
     @overload
-    def transfers(self, asset: str, *, confidentiality: Score, integrity: Score, availability: Score) -> "Asset":
+    def transfers(
+        self,
+        asset: str,
+        *,
+        confidentiality: Score,
+        integrity: Score,
+        availability: Score,
+    ) -> "Asset":
         ...
 
-    def transfers(self, asset: Union["Asset", str], confidentiality: Score = Score.NONE, integrity: Score = Score.NONE, availability: Score = Score.NONE) -> "Asset":
+    def transfers(
+        self,
+        asset: Union["Asset", str],
+        confidentiality: Score = Score.NONE,
+        integrity: Score = Score.NONE,
+        availability: Score = Score.NONE,
+    ) -> "Asset":
         if isinstance(asset, Asset):
             self._assets.add(asset)
             self.source.processes(asset)
             self.destination.processes(asset)
             return asset
 
-        new_asset = Asset(self, name=asset, confidentiality=confidentiality,
-                          integrity=integrity, availability=availability)
+        new_asset = Asset(
+            self,
+            name=asset,
+            confidentiality=confidentiality,
+            integrity=integrity,
+            availability=availability,
+        )
         self._assets.add(new_asset)
         self.source.processes(new_asset)
         self.destination.processes(new_asset)
         return new_asset
 
+    @property
     def is_across_trust_boundary(self) -> bool:
         return self.source.trust_boundary != self.destination.trust_boundary
 
+    @property
     def is_relational_database_protocol(self) -> bool:
         return self.protocol in [
             Protocol.JDBC,
@@ -238,12 +220,23 @@ class DataFlow(Element, TagMixin):
             Protocol.SQL_ENCRYPTED,
         ]
 
+    @property
     def is_nosql_database_protocol(self) -> bool:
         return self.protocol in [
             Protocol.NOSQL,
             Protocol.NOSQL_ENCRYPTED,
         ]
 
+    @property
+    def is_web_access_protocol(self) -> bool:
+        return self.protocol in [
+            Protocol.HTTP,
+            Protocol.HTTPS,
+            Protocol.WS,
+            Protocol.WSS,
+        ]
+
+    @property
     def is_encrypted(self) -> bool:
         return self.vpn or self.protocol in [
             Protocol.HTTPS,
@@ -259,22 +252,27 @@ class DataFlow(Element, TagMixin):
             Protocol.FTPS,
             Protocol.SCP,
             Protocol.LDAPS,
-            Protocol.IIOP_ENCRYPTED,
-            Protocol.JRMP_ENCRYPTED,
             Protocol.SMB_ENCRYPTED,
             Protocol.SMTP_ENCRYPTED,
             Protocol.POP3_ENCRYPTED,
             Protocol.IMAP_ENCRYPTED,
         ]
 
-    def data_flow_diagram(self, auto_view: bool = True,  hide_data_flow_labels: bool = False) -> None:
-        diagram = DataFlowDiagram(self.name, is_notebook=self._model.is_notebook(), hide_data_flow_labels=hide_data_flow_labels)
+    def create_data_flow_diagram(
+        self, auto_view: bool = True, hide_data_flow_labels: bool = False
+    ) -> None:
+        diagram = DataFlowDiagram(
+            self.name,
+            is_notebook=self._model.is_notebook(),
+            hide_data_flow_labels=hide_data_flow_labels,
+        )
+
         diagram.add_node(self.source.diagram_node)
         diagram.add_node(self.destination.diagram_node)
         diagram.add_edge(self.diagram_edge)
+
         if auto_view is False or self._model.is_notebook() or self._model.is_ci():
             diagram.save()
             return
 
         diagram.show()
-

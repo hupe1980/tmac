@@ -1,5 +1,8 @@
 # tmac
 > Agile Threat Modeling as Code
+- Close to the code - close to developers
+- Optimized for jupyter notebooks
+- Generates data-flow diagrams
 
 ## Install
 ```bash
@@ -18,63 +21,66 @@ from tmac import (Asset, DataFlow, Machine, Model, Process, Protocol,
                     Score, TableFormat, Technology)
 from tmac.plus import Browser, Database
 
-model = Model("Login Model")
+model = Model("REST API Model")
 
-user = Browser(model, "User")
+user = User(model, "User")
 
 web_server = Process(
-    model, "WebServer",
+    model,
+    "WebServer",
     machine=Machine.VIRTUAL,
-    technology=Technology.WEB_WEB_APPLICATION,
+    technology=Technology.WEB_APPLICATION,
 )
 
-login = DataFlow(
-    model, "Login",
-    source=user,
+database = Database(
+    model,
+    "Database",
+    machine=Machine.VIRTUAL,
+)
+
+web_traffic = user.add_data_flow(
+    "WebTraffic",
     destination=web_server,
     protocol=Protocol.HTTPS,
 )
 
-login.transfers(
+web_traffic.transfers(
     "UserCredentials",
     confidentiality=Score.HIGH,
     integrity=Score.HIGH,
     availability=Score.HIGH,
 )
 
-database = Database(
-    model, "Database",
-    machine=Machine.VIRTUAL,
-)
-
-authenticate = DataFlow(
-    model, "Authenticate",
-    source=web_server,
+database_traffic = web_server.add_data_flow(
+    "DatabaseTraffic",
     destination=database,
     protocol=Protocol.SQL,
 )
 
-user_details = Asset(
-    model, "UserDetails",
+database_traffic.transfers(
+    "UserDetails",
     confidentiality=Score.HIGH,
     integrity=Score.HIGH,
     availability=Score.HIGH,
 )
 
-authenticate.transfers(user_details)
-
 print(model.risks_table(table_format=TableFormat.GITHUB))
 ```
 Output:
-| SID                 | Severity   | Category                   | Name                                | Affected   | Treatment   |
-|---------------------|------------|----------------------------|-------------------------------------|------------|-------------|
-| CAPEC-63@WebServer  | elevated   | Inject Unexpected Items    | Cross-Site Scripting (XSS)          | WebServer  | mitigated   |
-| CAPEC-100@WebServer | high       | Manipulate Data Structures | Overflow Buffers                    | WebServer  | unchecked   |
-| CAPEC-101@WebServer | elevated   | Inject Unexpected Items    | Server Side Include (SSI) Injection | WebServer  | mitigated   |
-| CAPEC-62@WebServer  | high       | Subvert Access Control     | Cross Site Request Forgery          | WebServer  | unchecked   |
-| CAPEC-66@WebServer  | elevated   | Inject Unexpected Items    | SQL Injection                       | WebServer  | unchecked   |
-|...|...|...|...|...|...|
-
+| ID                 | Risk                                         |
+|--------------------|----------------------------------------------|
+| CAPEC-63@WebServer | Cross-Site Scripting (XSS) risk at WebServer |
+| CAPEC-66@WebServer | SQL Injection risk at WebServer              |
+|...|...|
+```python
+print(model.create_backlog_table(table_format=TableFormat.GITHUB))
+```
+Output:
+| ID                            | User Story                                                                                                                                                                                                                              |
+|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ASVS-5.1.3@CAPEC-63@WebServer | As a Security Champion I want all of the input which can affect control or data flow to be validated so that I can protect my application from malicious manipulation which could lead to unauthorised disclosure or loss of integrity. |
+| ASVS-5.3.3@CAPEC-63@WebServer | As a Security Champion I want all of the output to be escaped so that I can protect my application against reflected, stored, and DOM based XSS.                                                                                        |
+| ASVS-5.3.4@CAPEC-66@WebServer | As a Security Champion I want all data selection or database queries use parameterized queries so that my application is protected against database injection attacks.                                                                  |
 ## Jupyter Threatbooks
 > Threat modeling with jupyter notebooks
 

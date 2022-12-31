@@ -1,12 +1,23 @@
-from .id import unique_id
+from .element import Element
 from .node import Construct
 from .otm import OpenThreatModelAsset, OpenThreatModelAssetRisk
 from .score import Score
 
 
-class Asset(Construct):
-    def __init__(self, scope: Construct, name: str, *, confidentiality: Score, integrity: Score, availability: Score, description: str = "", is_pii: bool = False) -> None:
-        super().__init__(scope, unique_id(name))
+class Asset(Element):
+    def __init__(
+        self,
+        scope: Construct,
+        name: str,
+        *,
+        confidentiality: Score,
+        integrity: Score,
+        availability: Score,
+        description: str = "",
+        is_pii: bool = False,
+        out_of_scope: bool = False,
+    ) -> None:
+        super().__init__(scope, name, description=description)
 
         self.name = name
         self.description = description
@@ -15,7 +26,7 @@ class Asset(Construct):
         self.availability = availability
         self.is_pii = is_pii
 
-    @property 
+    @property
     def average_score(self) -> float:
         return (self.confidentiality + self.integrity + self.availability) / 3
 
@@ -32,6 +43,5 @@ class Asset(Construct):
             description=self.description,
             attributes={
                 "is_pii": str(self.is_pii),
-            }
+            },
         )
-
