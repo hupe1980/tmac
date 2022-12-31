@@ -13,7 +13,7 @@ from typing import (
 if TYPE_CHECKING:
     from .component import TechnicalComponent
     from .model import Model
-    from .risk import Risk
+    from .risk import ComponentRisk, ModelRisk, Risk
     from .user_story import UserStoryTemplate, UserStoryTemplateRepository
 
 
@@ -39,25 +39,26 @@ class Stride(Enum):
     def __str__(self) -> str:
         return str(self.value)
 
+
 class Linddum(Enum):
     LINKABILITY = "linkability"
     """An adversary is able to link two items of interest without knowing the identity of the data subject(s) involved."""
-    
+
     IDENTIFIABILITY = "identifiability"
     """An adversary is able to identify a data subject from a set of data subjects through an item of interest."""
-    
+
     NON_REPUDIATION = "non-repudiation"
     """The data subject is unable to deny a claim (e.g., having performed an action, or sent a request)."""
-    
+
     DETECTABILITY = "detectability"
     """An adversary is able to distinguish whether an item of interest about a data subject exists or not, regardless of being able to read the contents itself."""
-    
+
     DISCLOSURE_OF_INFORMATION = "disclosure-of-information"
     """An adversary is able to learn the content of an item of interest about a data subject."""
-   
+
     UNAWARENESS = "unawareness"
     """The data subject is unaware of the collection, processing, storage, or sharing activities (and corresponding purposes) of the data subject's personal data."""
-    
+
     NON_COMPLIANCE = "non-compliance"
     """The processing, storage, or handling of personal data is not compliant with legislation, regulation, and/or policy."""
 
@@ -74,7 +75,9 @@ class ThreatLibrary(MutableMapping[str, "BaseThreat"]):
         for threat in threats:
             self._lib[threat.id] = threat
 
-    def apply(self, model: "Model", component: Optional["TechnicalComponent"]) -> List["Risk"]:
+    def apply(
+        self, model: "Model", component: Optional["TechnicalComponent"]
+    ) -> List["Risk"]:
         risks: List["Risk"] = list()
 
         for item in self.values():
@@ -83,14 +86,10 @@ class ThreatLibrary(MutableMapping[str, "BaseThreat"]):
 
             if isinstance(item, ComponentThreat) and component is not None:
                 if item.is_applicable(component):
-                    risk = item.apply(component, model)
-                    if risk is not None:
-                        risks.append(risk)
+                    risks.extend(item.apply(component, model))
 
             if isinstance(item, ModelThreat):
-                risk = item.apply(model)
-                if risk is not None:
-                    risks.append(risk)
+                risks.extend(item.apply(model))
 
         if self.after_apply_hook is not None:
             self.after_apply_hook(risks)
@@ -115,13 +114,24 @@ class ThreatLibrary(MutableMapping[str, "BaseThreat"]):
 
 class BaseThreat(ABC):
     def __init__(
-        self, id: str, name: str, risk_text: str, stride: Stride, cwe_ids: List[int] = []
+        self,
+        id: str,
+        name: str,
+        description: str,
+        risk_text: str,
+        stride: Stride,
+        cwe_ids: List[int] = [],
+        prerequisites: List[str] = [],
+        references: List[str] = [],
     ) -> None:
         self._id = id
         self._name = name
+        self.description = description
         self.risk_text = risk_text
         self.stride = stride
         self.cwe_ids = cwe_ids
+        self.prerequisites = prerequisites
+        self.references = references
 
     @property
     def id(self) -> str:
@@ -134,24 +144,42 @@ class BaseThreat(ABC):
 
 class ModelThreat(BaseThreat):
     def __init__(
-        self, id: str, name: str, risk_text: str, stride: Stride, cwe_ids: List[int] = []
+        self,
+        id: str,
+        name: str,
+        description: str,
+        risk_text: str,
+        stride: Stride,
+        cwe_ids: List[int] = [],
+        prerequisites: List[str] = [],
+        references: List[str] = [],
     ) -> None:
-        super().__init__(id, name, risk_text, stride, cwe_ids)
+        super().__init__(id, name, description, risk_text, stride, cwe_ids, prerequisites, references)
 
     @abstractmethod
-    def apply(self, model: "Model") -> Optional["Risk"]:
+    def apply(self, model: "Model") -> List["ModelRisk"]:
         pass
 
     @abstractmethod
-    def get_user_story_templates(self, repository: "UserStoryTemplateRepository") -> List["UserStoryTemplate"]:
+    def get_user_story_templates(
+        self, repository: "UserStoryTemplateRepository"
+    ) -> List["UserStoryTemplate"]:
         pass
 
 
 class ComponentThreat(BaseThreat):
     def __init__(
-        self, id: str, name: str, risk_text: str, stride: Stride, cwe_ids: List[int] = []
+        self,
+        id: str,
+        name: str,
+        description: str,
+        risk_text: str,
+        stride: Stride,
+        cwe_ids: List[int] = [],
+        prerequisites: List[str] = [],
+        references: List[str] = [],
     ) -> None:
-        super().__init__(id, name, risk_text, stride, cwe_ids)
+        super().__init__(id, name, description, risk_text, stride, cwe_ids, prerequisites, references)
 
     def is_applicable(self, component: "TechnicalComponent") -> bool:
         if component.out_of_scope:
@@ -159,13 +187,12 @@ class ComponentThreat(BaseThreat):
         return True
 
     @abstractmethod
-    def apply(self, component: "TechnicalComponent", model: "Model") -> Optional["Risk"]:
+    def apply(
+        self, component: "TechnicalComponent", model: "Model"
+    ) -> List["ComponentRisk"]:
         pass
 
-    def get_user_story_templates(self, repository: "UserStoryTemplateRepository", component: "TechnicalComponent") -> List["UserStoryTemplate"]:
+    def get_user_story_templates(
+        self, repository: "UserStoryTemplateRepository", component: "TechnicalComponent"
+    ) -> List["UserStoryTemplate"]:
         return repository.get_by_cwe(*self.cwe_ids)
-
-
-
-
-

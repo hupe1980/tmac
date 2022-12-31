@@ -16,7 +16,7 @@ from .diagram import DataFlowDiagram, DiagramEdge, DiagramNode
 from .element import Element
 from .model import Model, ModelException
 from .node import Construct
-from .risk import Risk
+from .risk import ComponentRisk, ModelRisk, Risk
 from .score import Score
 from .table_format import TableFormat
 from .tag import TagMixin
@@ -47,6 +47,8 @@ __all__ = (
     "Model",
     "ModelException",
     "Construct",
+    "ComponentRisk",
+    "ModelRisk",
     "Risk",
     "Score",
     "TableFormat",

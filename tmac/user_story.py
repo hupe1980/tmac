@@ -78,6 +78,14 @@ class UserStory:
         return f"{self._template.id}@{self._risk.id}"
 
     @property
+    def description(self) -> str:
+        return self._template.description
+
+    @property
+    def feature_name(self) -> str:
+        return self._template.feature_name
+
+    @property
     def text(self) -> str:
         return Template(self._template.text).render()
 
