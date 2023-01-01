@@ -20,7 +20,16 @@ from .risk import ComponentRisk, ModelRisk, Risk
 from .score import Score
 from .table_format import TableFormat
 from .tag import TagMixin
-from .threat import BaseThreat, ComponentThreat, ModelThreat, Stride, ThreatLibrary
+from .threat import (
+    CAPEC,
+    LINDDUM,
+    STRIDE,
+    BaseThreat,
+    Category,
+    ComponentThreat,
+    ModelThreat,
+    ThreatLibrary,
+)
 from .trust_boundary import TrustBoundary
 from .user_story import UserStory, UserStoryTemplate, UserStoryTemplateRepository
 
@@ -53,10 +62,13 @@ __all__ = (
     "Score",
     "TableFormat",
     "TagMixin",
+    "CAPEC",
+    "LINDDUM",
+    "STRIDE",
     "BaseThreat",
+    "Category",
     "ComponentThreat",
     "ModelThreat",
-    "Stride",
     "ThreatLibrary",
     "TrustBoundary",
     "UserStory",

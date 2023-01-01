@@ -17,7 +17,7 @@ from tmac import (
 )  # noqa: E402
 from tmac.plus import Database, User  # noqa: E402
 
-model = Model("REST API Model")
+model = Model("REST API Model", description="Sample description")
 
 internet = TrustBoundary(model, "Internet")
 dmz = TrustBoundary(model, "DMZ")

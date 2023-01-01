@@ -17,7 +17,69 @@ if TYPE_CHECKING:
     from .user_story import UserStoryTemplate, UserStoryTemplateRepository
 
 
-class Stride(Enum):
+class Category(Enum):
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class CAPEC(Category):
+    ENGAGE_IN_DECEPTIVE_INTERACTIONS = "Engage in Deceptive Interactions"
+    """Attack patterns within this category focus on malicious interactions with a
+    target in an attempt to deceive the target and convince the target that it is 
+    interacting with some other principal and as such take actions based on the 
+    level of trust that exists between the target and the other principal.
+    https://capec.mitre.org/data/definitions/156.html"""
+
+    ABUSE_EXISTING_FUNCTIONALITY = "Abuse Existing Functionality"
+    """An adversary uses or manipulates one or more functions of an application in 
+    order to achieve a malicious objective not originally intended by the application, 
+    or to deplete a resource to the point that the target's functionality is affected.
+    https://capec.mitre.org/data/definitions/210.html"""
+
+    MANIPULATE_DATA_STRUCTURES = "Manipulate Data Structures"
+    """Attack patterns in this category manipulate and exploit characteristics of system 
+    data structures in order to violate the intended usage and protections of these structures.
+    https://capec.mitre.org/data/definitions/255.html"""
+
+    MANIPULATE_SYSTEM_RESOURCES = "Manipulate System Resources"
+    """Attack patterns within this category focus on the adversary's ability to manipulate one or 
+    more resources in order to achieve a desired outcome.
+    https://capec.mitre.org/data/definitions/262.html"""
+
+    INJECT_UNEXPECTED_ITEMS = "Inject Unexpected Items"
+    """Attack patterns within this category focus on the ability to control or disrupt the 
+    behavior of a target either through crafted data submitted via an interface for data input, 
+    or the installation and execution of malicious code on the target system.
+    https://capec.mitre.org/data/definitions/152.html"""
+
+    EMPLOY_PROBALILISTIC_TECHNIQUES = "Employ Probabilistic Techniques"
+    """An attacker utilizes probabilistic techniques to explore and overcome security properties 
+    of the target that are based on an assumption of strength due to the extremely low mathematical 
+    probability that an attacker would be able to identify and exploit the very rare specific 
+    conditions under which those security properties do not hold.
+    https://capec.mitre.org/data/definitions/223.html"""
+
+    MANIPULATE_TIMING_AND_STATE = "Manipulate Timing and State"
+    """An attacker exploits weaknesses in timing or state maintaining functions to perform actions 
+    that would otherwise be prevented by the execution flow of the target code and processes.
+    https://capec.mitre.org/data/definitions/172.html"""
+
+    COLLECT_AND_ANALYZE_INFORMATION = "Collect and Analyze Information"
+    """Attack patterns within this category focus on the gathering, collection, and theft of 
+    information by an adversary.
+    https://capec.mitre.org/data/definitions/118.html
+    """
+
+    SUBVERT_ACCESS_CONTROL = "Subvert Access Control"
+    """An attacker actively targets exploitation of weaknesses, limitations and assumptions 
+    in the mechanisms a target utilizes to manage identity and authentication as well as 
+    manage access to its resources or authorize functionality.
+    https://capec.mitre.org/data/definitions/225.html
+    """
+
+    
+
+class STRIDE(Category):
     SPOOFING = "spoofing"
     """Involves illegally accessing and then using another user's authentication information, such as username and password."""
 
@@ -40,7 +102,7 @@ class Stride(Enum):
         return str(self.value)
 
 
-class Linddum(Enum):
+class LINDDUM(Category):
     LINKABILITY = "linkability"
     """An adversary is able to link two items of interest without knowing the identity of the data subject(s) involved."""
 
@@ -119,7 +181,7 @@ class BaseThreat(ABC):
         name: str,
         description: str,
         risk_text: str,
-        stride: Stride,
+        category: Category,
         cwe_ids: List[int] = [],
         prerequisites: List[str] = [],
         references: List[str] = [],
@@ -128,7 +190,7 @@ class BaseThreat(ABC):
         self._name = name
         self.description = description
         self.risk_text = risk_text
-        self.stride = stride
+        self.category = category
         self.cwe_ids = cwe_ids
         self.prerequisites = prerequisites
         self.references = references
@@ -149,12 +211,12 @@ class ModelThreat(BaseThreat):
         name: str,
         description: str,
         risk_text: str,
-        stride: Stride,
+        category: Category,
         cwe_ids: List[int] = [],
         prerequisites: List[str] = [],
         references: List[str] = [],
     ) -> None:
-        super().__init__(id, name, description, risk_text, stride, cwe_ids, prerequisites, references)
+        super().__init__(id, name, description, risk_text, category, cwe_ids, prerequisites, references)
 
     @abstractmethod
     def apply(self, model: "Model") -> List["ModelRisk"]:
@@ -174,12 +236,12 @@ class ComponentThreat(BaseThreat):
         name: str,
         description: str,
         risk_text: str,
-        stride: Stride,
+        category: Category,
         cwe_ids: List[int] = [],
         prerequisites: List[str] = [],
         references: List[str] = [],
     ) -> None:
-        super().__init__(id, name, description, risk_text, stride, cwe_ids, prerequisites, references)
+        super().__init__(id, name, description, risk_text, category, cwe_ids, prerequisites, references)
 
     def is_applicable(self, component: "TechnicalComponent") -> bool:
         if component.out_of_scope:

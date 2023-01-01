@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from .component import TechnicalComponent
     from .data_flow import DataFlow
     from .model import Model
-    from .threat import BaseThreat, Stride
+    from .threat import BaseThreat, Category
     
 
 
@@ -46,8 +46,8 @@ class Risk(ABC):
         return self._threat.prerequisites
     
     @property
-    def stride(self) -> "Stride":
-        return self._threat.stride
+    def category(self) -> "Category":
+        return self._threat.category
 
     @property
     def references(self) -> List[str]:

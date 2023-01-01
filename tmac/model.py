@@ -148,22 +148,22 @@ class Model(Construct, TagMixin):
         return os.environ.get("CI") is not None
 
     def create_risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
-        headers = ["ID", "Risk"]
+        headers = ["ID", "Category", "Risk"]
         table = []
         for risk in self.risks:
-            table.append([risk.id, risk.text])
+            table.append([risk.id, risk.category, risk.text])
 
         return tabulate(table, headers=headers, tablefmt=str(table_format))
 
     def create_backlog_table(
         self, table_format: TableFormat = TableFormat.SIMPLE
     ) -> str:
-        headers = ["ID", "User Story"]
+        headers = ["ID", "Category", "User Story"]
         table = []
         for user_story in self.user_stories:
-            table.append([user_story.id, user_story.text])
+            table.append([user_story.id, user_story.sub_category, user_story.text])
 
-        maxcolwodths: Optional[Iterable[int | None]] = [None, 80]
+        maxcolwodths: Optional[Iterable[int | None]] = [None, 20, 100]
         if table_format == TableFormat.GITHUB:
             maxcolwodths = None
 

@@ -5,17 +5,17 @@
 ![](dfd.png)
 
 ## Potential Risks
-|ID|Risk|
-|---|---|
+|ID|Category|Risk|
+|---|---|---|
 {% for risk in model.risks -%}
-|[{{ risk.id }}](#{{ risk.id|lower|replace("@", "")|replace(".", "") }})|{{ risk.text }}|
+|[{{ risk.id }}](#{{ risk.id|lower|replace("@", "")|replace(".", "") }})|{{ risk.category }}|{{ risk.text }}|
 {% endfor %}
 
 ## User Stories
-|ID|User Story|
-|---|---|
+|ID|Category|User Story|
+|---|---|---|
 {% for story in model.user_stories -%}
-|[{{ story.id }}](#{{ story.id|lower|replace("@", "")|replace(".", "") }})|{{ story.text }}|
+|[{{ story.id }}](#{{ story.id|lower|replace("@", "")|replace(".", "") }})|{{ story.sub_category }}|{{ story.text }}|
 {% endfor %}
 
 ## Risk Details
@@ -51,6 +51,15 @@
 **User Story**:\
 {{ story.text }}
 
+{% if story.scenarios|length > 0 %}
+**Scenarios**:\
+{% for key, value in story.scenarios.items() -%}
+**{{ key }}**:
+```Gherkin
+{{ value }}
+```
+{% endfor %}
+{% endif %}
 **References**:
 {% for reference in story.references -%}
 - {{ reference }}
