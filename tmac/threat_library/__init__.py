@@ -1,13 +1,45 @@
 import os
 from typing import TYPE_CHECKING, List
 
-from ..component import TechnicalComponent, Technology
+from ..component import DataFormat, TechnicalComponent, Technology
 from ..risk import ComponentRisk
 from ..threat import CAPEC, ComponentThreat, ThreatLibrary
-from ..user_story import UserStoryTemplateRepository
+from ..user_story import ASVSCategory, UserStoryTemplate, UserStoryTemplateRepository
 
 if TYPE_CHECKING:
     from ..model import Model
+
+
+class CAPEC_62(ComponentThreat):
+    def __init__(self) -> None:
+        super().__init__(
+            id="CAPEC-62",
+            name="Cross-Site Request Forgery (CSRF)",
+            category=CAPEC.SUBVERT_ACCESS_CONTROL,
+            description="An attacker crafts malicious web links and distributes them (via web pages, email, etc.), typically in a targeted manner, hoping to induce users to click on the link and execute the malicious action against some third-party application. If successful, the action embedded in the malicious link will be processed and accepted by the targeted application with the users' privilege level. This type of attack leverages the persistence and implicit trust placed in user session cookies by many web applications today. In such an architecture, once the user authenticates to an application and a session cookie is created on the user's system, all following transactions for that session are authenticated using that cookie including potential actions initiated by an attacker and simply 'riding' the existing session cookie.",
+            prerequisites=[],
+            risk_text="Cross-Site Request Forgery (CSRF) risk at {{ component.name }} via {{ data_flow.name }} from {{ data_flow.source.name }}",
+            cwe_ids=[352, 306, 664, 732, 1275],
+            references=["https://capec.mitre.org/data/definitions/63.html"],
+        )
+
+    def apply(
+        self, component: "TechnicalComponent", model: "Model"
+    ) -> List["ComponentRisk"]:
+        risks: List["ComponentRisk"] = list()
+
+        if component.is_web_application is False:
+            return []
+
+        for flow in component.incoming_flows:
+            if flow.is_web_access_protocol:
+                risks.append(
+                    ComponentRisk(
+                        self, component=component, data_flow=flow, model=model
+                    )
+                )
+
+        return risks
 
 
 class CAPEC_63(ComponentThreat):
@@ -34,6 +66,28 @@ class CAPEC_63(ComponentThreat):
             risks.append(ComponentRisk(self, component=component, model=model))
 
         return risks
+
+    def get_user_story_templates(
+        self, repository: "UserStoryTemplateRepository", component: "TechnicalComponent"
+    ) -> List["UserStoryTemplate"]:
+        tpls = repository.get_by_cwe(*self.cwe_ids)
+        
+        result: List[UserStoryTemplate] = list()
+        for tpl in tpls:
+            if 20 in tpl.cwe_ids and tpl.sub_category == ASVSCategory.RESTFUL_WEB_SERVICE and (
+                not DataFormat.JSON in component.accept_data_formats
+                or not component.technology == Technology.WEB_SERVICE_REST
+            ):
+                continue
+            elif 20 in tpl.cwe_ids and tpl.sub_category == ASVSCategory.SOAP_WEB_SERVICE and (
+                not DataFormat.XML in component.accept_data_formats
+                or not component.technology == Technology.WEB_SERVICE_SOAP
+            ):
+                 continue
+            
+            result.append(tpl)
+
+        return result
 
 
 class CAPEC_66(ComponentThreat):
@@ -90,10 +144,12 @@ class CAPEC_126(ComponentThreat):
         risks: List["ComponentRisk"] = list()
 
         for flow in component.outgoing_flows:
-            if (
-                isinstance(flow.destination, TechnicalComponent)
-                and flow.destination.technology in [Technology.FILE_SERVER, Technology.LOCAL_FILE_SYSTEM]
-            ):
+            if isinstance(
+                flow.destination, TechnicalComponent
+            ) and flow.destination.technology in [
+                Technology.FILE_SERVER,
+                Technology.LOCAL_FILE_SYSTEM,
+            ]:
                 risks.append(
                     ComponentRisk(
                         self, component=component, data_flow=flow, model=model
@@ -122,6 +178,9 @@ class CAPEC_664(ComponentThreat):
         self, component: "TechnicalComponent", model: "Model"
     ) -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
+
+        if component.is_client or component.technology in [Technology.LOAD_BALANCER]:
+            return []
 
         for flow in component.outgoing_flows:
             if flow.is_web_access_protocol:
@@ -171,6 +230,7 @@ class CAPEC_676(ComponentThreat):
 DEFAULT_THREAT_LIBRARY = ThreatLibrary()
 
 DEFAULT_THREAT_LIBRARY.add_threats(
+    CAPEC_62(),
     CAPEC_63(),
     CAPEC_66(),
     CAPEC_126(),

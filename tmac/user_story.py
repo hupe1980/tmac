@@ -1,10 +1,16 @@
 import json
-from typing import Any, Dict, List, TYPE_CHECKING
+from enum import Enum
+from typing import TYPE_CHECKING, Dict, List
 
 from jinja2 import Template
 
 if TYPE_CHECKING:
     from .risk import Risk
+
+
+class ASVSCategory(str, Enum):
+    RESTFUL_WEB_SERVICE = "RESTful Web Service"
+    SOAP_WEB_SERVICE = "SOAP Web Service"
 
 
 class UserStoryTemplateRepository:
@@ -13,11 +19,11 @@ class UserStoryTemplateRepository:
         repostiroy = UserStoryTemplateRepository()
 
         with open(filename, "r", encoding="utf8") as tpl_file:
-             tpl_json = json.load(tpl_file)
-        
+            tpl_json = json.load(tpl_file)
+
         for tpl in tpl_json:
             repostiroy.add_templates(UserStoryTemplate(**tpl))
-        
+
         return repostiroy
 
     def __init__(self) -> None:
@@ -41,9 +47,6 @@ class UserStoryTemplateRepository:
         return tpls
 
 
-
-
-
 class UserStoryTemplate:
     def __init__(
         self,
@@ -65,7 +68,7 @@ class UserStoryTemplate:
         self.description = description
         self.feature_name = feature_name
         self.user_story = user_story
-        self.scenarios = scenarios 
+        self.scenarios = scenarios
         self.references = references
         self.cwe_ids = cwe_ids
         self.nist = nist
@@ -112,8 +115,13 @@ class UserStory:
     @property
     def scenarios(self) -> Dict[str, str]:
         return self._template.scenarios
-    
+
     @property
     def references(self) -> List[str]:
-        return [*self._template.references, *[f"https://cwe.mitre.org/data/definitions/{cwe_id}.html" for cwe_id in self._template.cwe_ids]]
-
+        return [
+            *self._template.references,
+            *[
+                f"https://cwe.mitre.org/data/definitions/{cwe_id}.html"
+                for cwe_id in self._template.cwe_ids
+            ],
+        ]

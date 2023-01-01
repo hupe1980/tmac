@@ -32,7 +32,6 @@ class Machine(str, metaclass=MachineMeta):  # type: ignore[misc] # https://githu
 class Technology(Enum):
     UNKNOWN = "unknown"
     # client_side
-    CLI = "cli"
     BROWSER = "browser"
     DESKTOP = "desktop"
     MOBILE_APP = "mobile-app"
@@ -254,6 +253,15 @@ class TechnicalComponent(Component):
         assets: Set["Asset"] = set.union(self._assets_processed, self._assets_stored)
         return cast(float, max([a.average_score for a in assets], default=0))
 
+    @property
+    def is_client(self) -> bool:
+        return self.technology in [
+            Technology.BROWSER,
+            Technology.DESKTOP,
+            Technology.MOBILE_APP,
+            Technology.WEB_UI,
+        ]
+    
     @property
     def is_web_application(self) -> bool:
         return self.technology in [

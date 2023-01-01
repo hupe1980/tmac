@@ -31,7 +31,7 @@ from .threat import (
     ThreatLibrary,
 )
 from .trust_boundary import TrustBoundary
-from .user_story import UserStory, UserStoryTemplate, UserStoryTemplateRepository
+from .user_story import ASVSCategory, UserStory, UserStoryTemplate, UserStoryTemplateRepository
 
 __all__ = (
     "Asset",
@@ -71,6 +71,7 @@ __all__ = (
     "ModelThreat",
     "ThreatLibrary",
     "TrustBoundary",
+    "ASVSCategory",
     "UserStory",
     "UserStoryTemplate",
     "UserStoryTemplateRepository",
