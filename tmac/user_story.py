@@ -1,11 +1,12 @@
 import json
+from abc import ABC, abstractproperty
 from enum import Enum
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Dict, Generic, List, TypeVar
 
 from jinja2 import Template
 
 if TYPE_CHECKING:
-    from .risk import Risk
+    from .risk import ComponentRisk, ModelRisk
 
 
 class ASVSCategory(str, Enum):
@@ -75,18 +76,25 @@ class UserStoryTemplate:
         self.tags = tags
 
 
-class UserStory:
+T = TypeVar("T")
+
+
+class UserStory(Generic[T]):
     def __init__(
         self,
         template: "UserStoryTemplate",
-        risk: "Risk",
+        risk: "T",
     ) -> None:
         self._template = template
         self._risk = risk
 
-    @property
+    @abstractproperty
     def id(self) -> str:
-        return f"{self._template.id}@{self._risk.id}"
+        pass
+
+    @abstractproperty
+    def text(self) -> str:
+        pass
 
     @property
     def description(self) -> str:
@@ -107,12 +115,6 @@ class UserStory:
         return self._template.feature_name
 
     @property
-    def text(self) -> str:
-        if self._template.user_story == "TODO":
-            return self.description
-        return Template(self._template.user_story).render()
-
-    @property
     def scenarios(self) -> Dict[str, str]:
         return self._template.scenarios
 
@@ -125,3 +127,47 @@ class UserStory:
                 for cwe_id in self._template.cwe_ids
             ],
         ]
+
+
+class ComponentUserStory(UserStory["ComponentRisk"]):
+    def __init__(
+        self,
+        template: "UserStoryTemplate",
+        risk: "ComponentRisk",
+    ) -> None:
+        super().__init__(template, risk)
+
+    @property
+    def id(self) -> str:
+        return f"{self._template.id}@{self._risk.id}"
+
+    @property
+    def text(self) -> str:
+        if self._template.user_story == "TODO":
+            return self.description
+
+        return Template(self._template.user_story).render(
+            component=self._risk.component,
+            data_flow=self._risk.data_flow,
+            model=self._risk.model,
+        )
+
+
+class ModelUserStory(UserStory["ModelRisk"]):
+    def __init__(
+        self,
+        template: "UserStoryTemplate",
+        risk: "ModelRisk",
+    ) -> None:
+        super().__init__(template, risk)
+
+    @property
+    def id(self) -> str:
+        return f"{self._template.id}@{self._risk.id}"
+
+    @property
+    def text(self) -> str:
+        if self._template.user_story == "TODO":
+            return self.description
+
+        return Template(self._template.user_story).render(model=self._risk.model)

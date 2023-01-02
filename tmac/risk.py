@@ -1,23 +1,23 @@
 from abc import ABC, abstractproperty
-from typing import TYPE_CHECKING, List, Set, Optional
+from typing import TYPE_CHECKING, Generic, List, Optional, Set, TypeVar
 
 from jinja2 import Template
 
 from .threat import ComponentThreat, ModelThreat
-from .user_story import UserStory
+from .user_story import ComponentUserStory, ModelUserStory, UserStory
 
 if TYPE_CHECKING:
     from .component import TechnicalComponent
     from .data_flow import DataFlow
     from .model import Model
     from .threat import BaseThreat, Category
-    
 
 
-class Risk(ABC):
-    def __init__(
-        self, threat: "BaseThreat", model: "Model"
-    ) -> None:
+T = TypeVar("T")
+
+
+class Risk(ABC, Generic[T]):
+    def __init__(self, threat: "BaseThreat", model: "Model") -> None:
         self._threat = threat
         self._model = model
 
@@ -30,7 +30,7 @@ class Risk(ABC):
         pass
 
     @abstractproperty
-    def user_stories(self) -> List["UserStory"]:
+    def user_stories(self) -> List[T]:
         pass
 
     @property
@@ -44,20 +44,34 @@ class Risk(ABC):
     @property
     def prerequisites(self) -> List[str]:
         return self._threat.prerequisites
-    
+
     @property
     def category(self) -> "Category":
         return self._threat.category
 
     @property
     def references(self) -> List[str]:
-        return [*self._threat.references, *[f"https://cwe.mitre.org/data/definitions/{cwe_id}.html" for cwe_id in self._threat.cwe_ids]]
-
+        return [
+            *self._threat.references,
+            *[
+                f"https://cwe.mitre.org/data/definitions/{cwe_id}.html"
+                for cwe_id in self._threat.cwe_ids
+            ],
+        ]
     
+    @property
+    def model(self) -> "Model":
+        return self._model
 
-class ComponentRisk(Risk):
+
+class ComponentRisk(Risk["ComponentUserStory"]):
     def __init__(
-        self, threat: "BaseThreat", *, component: "TechnicalComponent", data_flow: Optional["DataFlow"] = None, model: "Model"
+        self,
+        threat: "BaseThreat",
+        *,
+        component: "TechnicalComponent",
+        data_flow: Optional["DataFlow"] = None,
+        model: "Model",
     ) -> None:
         super().__init__(threat=threat, model=model)
 
@@ -72,23 +86,36 @@ class ComponentRisk(Risk):
 
     @property
     def text(self) -> str:
-        return Template(self._threat.risk_text).render(component=self._component, data_flow=self._data_flow, model=self._model)
+        return Template(self._threat.risk_text).render(
+            component=self._component, data_flow=self._data_flow, model=self._model
+        )
 
     @property
-    def user_stories(self) -> List["UserStory"]:
-        stories: Set["UserStory"] = set()
+    def component(self) -> "TechnicalComponent":
+        return self._component
+
+    @property
+    def data_flow(self) -> Optional["DataFlow"]:
+        return self._data_flow
+
+    @property
+    def user_stories(self) -> List["ComponentUserStory"]:
+        stories: Set["ComponentUserStory"] = set()
         if isinstance(self._threat, ComponentThreat):
             for tpl in self._threat.get_user_story_templates(
                 self._model.user_story_template_repository, self._component
             ):
-                stories.add(UserStory(tpl, self))
+                stories.add(ComponentUserStory(tpl, self))
             return list(stories)
 
         return NotImplemented
 
-class ModelRisk(Risk):
+
+class ModelRisk(Risk["ModelUserStory"]):
     def __init__(
-        self, threat: "BaseThreat", model: "Model",  
+        self,
+        threat: "BaseThreat",
+        model: "Model",
     ) -> None:
         super().__init__(threat=threat, model=model)
 
@@ -101,15 +128,14 @@ class ModelRisk(Risk):
         return Template(self._threat.risk_text).render(model=self._model)
 
     @property
-    def user_stories(self) -> List["UserStory"]:
-        stories: Set["UserStory"] = set()
+    def user_stories(self) -> List["ModelUserStory"]:
+        stories: Set["ModelUserStory"] = set()
 
         if isinstance(self._threat, ModelThreat):
             for tpl in self._threat.get_user_story_templates(
                 self._model.user_story_template_repository
             ):
-                stories.add(UserStory(tpl, self))
+                stories.add(ModelUserStory(tpl, self))
             return list(stories)
 
         return NotImplemented
-        

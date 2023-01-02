@@ -67,11 +67,12 @@ database_traffic.transfers(
 print(model.risks_table(table_format=TableFormat.GITHUB))
 ```
 Output:
-| ID                                 | Risk                                                                          |
-|------------------------------------|-------------------------------------------------------------------------------|
-| CAPEC-63@WebServer                 | Cross-Site Scripting (XSS) risk at WebServer                                  |
-| CAPEC-66@WebServer@DatabaseTraffic | SQL Injection risk at WebServer against database Database via DatabaseTraffic |
-|...|...|
+| ID                                 | Category                | Risk                                                                          |
+|------------------------------------|-------------------------|-------------------------------------------------------------------------------|
+| CAPEC-62@WebServer@WebTraffic      | Subvert Access Control  | Cross-Site Request Forgery (CSRF) risk at WebServer via WebTraffic from User  |
+| CAPEC-63@WebServer                 | Inject Unexpected Items | Cross-Site Scripting (XSS) risk at WebServer                                  |
+| CAPEC-66@WebServer@DatabaseTraffic | Inject Unexpected Items | SQL Injection risk at WebServer against database Database via DatabaseTraffic |
+|...|...|...|
 ```python
 print(model.create_backlog_table(table_format=TableFormat.GITHUB))
 ```

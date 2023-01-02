@@ -38,6 +38,7 @@ class Technology(Enum):
     WEB_UI = "web-ui"
     # server_side
     WEB_APPLICATION = "web-application"
+    WEB_SERVER = "web-server"
     WEB_SERVICE_REST = "web-service-rest"
     WEB_SERVICE_SOAP = "web-service-soap"
     WEB_SERVICE_GRAPHQL = "web-service-graphql"
@@ -266,6 +267,7 @@ class TechnicalComponent(Component):
     def is_web_application(self) -> bool:
         return self.technology in [
             Technology.WEB_APPLICATION,
+            Technology.WEB_SERVER,
         ]
 
     @property
