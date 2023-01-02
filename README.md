@@ -17,28 +17,39 @@ python3 tmac.py
 ```python
 #!/usr/bin/env python3
 
-from tmac import (Asset, DataFlow, Machine, Model, Process, Protocol, 
-                    Score, TableFormat, Technology)
+from tmac import (
+    Model,
+    Process,
+    Protocol,
+    Score,
+    TableFormat,
+    Technology,
+    TrustBoundary,
+)
 from tmac.plus import Browser, Database
 
-model = Model("REST API Model")
+model = Model("Demo Model", description="Sample description")
 
-user = User(model, "User")
+internet = TrustBoundary(model, "Internet")
+dmz = TrustBoundary(model, "DMZ")
+intranet = TrustBoundary(model, "Intranet")
+
+browser = Browser(model, "Browser", trust_boundary=internet)
 
 web_server = Process(
     model,
     "WebServer",
-    machine=Machine.VIRTUAL,
     technology=Technology.WEB_APPLICATION,
+    trust_boundary=dmz,
 )
 
 database = Database(
     model,
     "Database",
-    machine=Machine.VIRTUAL,
+    trust_boundary=intranet,
 )
 
-web_traffic = user.add_data_flow(
+web_traffic = browser.add_data_flow(
     "WebTraffic",
     destination=web_server,
     protocol=Protocol.HTTPS,
