@@ -5,7 +5,7 @@ from jinja2 import Template
 from tabulate import tabulate
 
 from .asset import Asset
-from .component import Component, TechnicalComponent
+from .component import Component
 from .data_flow import DataFlow
 from .diagram import DataFlowDiagram
 from .node import Construct, unique_id
@@ -113,8 +113,8 @@ class Model(Construct, TagMixin):
         return list(self._risks.values())
 
     @property
-    def user_stories(self) -> List["UserStory"]:
-        stories: Set["UserStory"] = set()
+    def user_stories(self) -> List["UserStory[Risk]"]:
+        stories: Set["UserStory[Risk]"] = set()
         for risk in self.risks:
             for story in risk.user_stories:
                 stories.add(story)
@@ -223,7 +223,7 @@ class Model(Construct, TagMixin):
 
         self._risks = dict()
         for c in self.components:
-            if not isinstance(c, TechnicalComponent):
+            if not isinstance(c, Component):
                 continue
             for risk in c.risks:
                 self._risks[risk.id] = risk

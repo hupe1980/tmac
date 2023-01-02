@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractproperty, abstractmethod
+from abc import ABCMeta
 from typing import List, TYPE_CHECKING
 
 from .node import Construct, unique_id

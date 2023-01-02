@@ -11,7 +11,7 @@ from typing import (
 )
 
 if TYPE_CHECKING:
-    from .component import TechnicalComponent
+    from .component import Component
     from .model import Model
     from .risk import ComponentRisk, ModelRisk, Risk
     from .user_story import UserStoryTemplate, UserStoryTemplateRepository
@@ -138,7 +138,7 @@ class ThreatLibrary(MutableMapping[str, "BaseThreat"]):
             self._lib[threat.id] = threat
 
     def apply(
-        self, model: "Model", component: Optional["TechnicalComponent"]
+        self, model: "Model", component: Optional["Component"]
     ) -> List["Risk"]:
         risks: List["Risk"] = list()
 
@@ -243,18 +243,18 @@ class ComponentThreat(BaseThreat):
     ) -> None:
         super().__init__(id, name, description, risk_text, category, cwe_ids, prerequisites, references)
 
-    def is_applicable(self, component: "TechnicalComponent") -> bool:
+    def is_applicable(self, component: "Component") -> bool:
         if component.out_of_scope:
             return False
         return True
 
     @abstractmethod
     def apply(
-        self, component: "TechnicalComponent", model: "Model"
+        self, component: "Component", model: "Model"
     ) -> List["ComponentRisk"]:
         pass
 
     def get_user_story_templates(
-        self, repository: "UserStoryTemplateRepository", component: "TechnicalComponent"
+        self, repository: "UserStoryTemplateRepository", component: "Component"
     ) -> List["UserStoryTemplate"]:
         return repository.get_by_cwe(*self.cwe_ids)

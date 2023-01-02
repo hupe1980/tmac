@@ -79,22 +79,43 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
         self,
         scope: Construct,
         name: str,
+        *,
+        technology: Technology,
+        machine: Machine = Machine.UNKNOWN,
         description: str = "",
+        vendor: str = "",
         trust_boundary: Optional["TrustBoundary"] = None,
+        human_use: bool = False,
+        encryption: Encryption = Encryption.NONE,
+        multi_tenant: bool = False,
+        redundant: bool = False,
+        custom_developed_parts: bool = False,
+        accept_data_formats: List[DataFormat] = [],
+        out_of_scope: bool = False,
+        overwrite_node_attrs: Dict[str, str] = dict(),
     ):
         super().__init__(scope, name, description)
 
+        self.trust_boundary = trust_boundary
+        self.machine = machine
+        self.technology = technology
+        self.vendor = vendor
+        self.human_use = human_use
+        self.encryption = encryption
+        self.multi_tenant = multi_tenant
+        self.redundant = redundant
+        self.custom_developed_parts = custom_developed_parts
+        self.accept_data_formats = set(accept_data_formats)
+        self.out_of_scope = out_of_scope
         self.trust_boundary = trust_boundary
 
         self._assets_processed: Set["Asset"] = set()
         self._assets_stored: Set["Asset"] = set()
 
-    @abstractproperty
-    def diagram_node(self) -> "DiagramNode":
-        pass
+        self._overwrite_node_attrs = overwrite_node_attrs
 
     @abstractproperty
-    def otm(self) -> "OpenThreatModelComponent":
+    def diagram_node(self) -> "DiagramNode":
         pass
 
     @property
@@ -114,121 +135,6 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
                 flows.add(flow)
 
         return list(flows)
-
-    def add_data_flow(
-        self,
-        name: str,
-        *,
-        destination: "Component",
-        protocol: "Protocol",
-        **kwargs: Any,
-    ) -> "DataFlow":
-        return DataFlow(
-            self,
-            name,
-            source=self,
-            destination=destination,
-            protocol=protocol,
-            **kwargs,
-        )
-
-    def processes(self, *assets: "Asset") -> None:
-        for asset in assets:
-            self._assets_processed.add(asset)
-            if isinstance(self, DataStore):
-                self._assets_stored.add(asset)
-
-    def stores(self, *assets: "Asset", skip_process: bool = False) -> None:
-        for asset in assets:
-            self._assets_stored.add(asset)
-            if not skip_process:
-                self._assets_processed.add(asset)
-
-
-class Actor(Component):
-    def __init__(
-        self,
-        scope: Construct,
-        name: str,
-        *,
-        is_human: bool = False,
-        description: str = "",
-        trust_boundary: Optional["TrustBoundary"] = None,
-        overwrite_node_attrs: Dict[str, str] = dict(),
-    ):
-        super().__init__(
-            scope, name, description=description, trust_boundary=trust_boundary
-        )
-
-        self.is_human = is_human
-        self._overwrite_node_attrs = overwrite_node_attrs
-
-    @property
-    def diagram_node(self) -> "DiagramNode":
-        return DiagramNode.from_attr(
-            self.id,
-            self.name,
-            shape="box",
-            labeljust="c",
-            labelloc="c",
-            **self._overwrite_node_attrs,
-        )
-
-    @property
-    def otm(self) -> "OpenThreatModelComponent":
-        return OpenThreatModelComponent(
-            self.id,
-            self.name,
-            type="actor",
-            description=self.description,
-            tags=self.tags,
-            attributes={
-                "is_human": str(self.is_human),
-            },
-        )
-
-
-class TechnicalComponent(Component):
-    def __init__(
-        self,
-        scope: Construct,
-        name: str,
-        *,
-        technology: Technology,
-        machine: Machine = Machine.UNKNOWN,
-        description: str = "",
-        vendor: str = "",
-        trust_boundary: Optional["TrustBoundary"] = None,
-        human_use: bool = False,
-        encryption: Encryption = Encryption.NONE,
-        multi_tenant: bool = False,
-        redundant: bool = False,
-        custom_developed_parts: bool = False,
-        accept_data_formats: List[DataFormat] = [],
-        out_of_scope: bool = False,
-        overwrite_node_attrs: Dict[str, str] = dict(),
-    ):
-        super().__init__(
-            scope, name, description=description, trust_boundary=trust_boundary
-        )
-
-        self.trust_boundary = trust_boundary
-        self.machine = machine
-        self.technology = technology
-        self.vendor = vendor
-        self.human_use = human_use
-        self.encryption = encryption
-        self.multi_tenant = multi_tenant
-        self.redundant = redundant
-        self.custom_developed_parts = custom_developed_parts
-        self.accept_data_formats = set(accept_data_formats)
-        self.out_of_scope = out_of_scope
-
-        self._overwrite_node_attrs = overwrite_node_attrs
-
-    @abstractproperty
-    def diagram_node(self) -> "DiagramNode":
-        pass
 
     @property
     def otm(self) -> "OpenThreatModelComponent":
@@ -262,7 +168,7 @@ class TechnicalComponent(Component):
             Technology.MOBILE_APP,
             Technology.WEB_UI,
         ]
-    
+
     @property
     def is_web_application(self) -> bool:
         return self.technology in [
@@ -278,8 +184,38 @@ class TechnicalComponent(Component):
             Technology.WEB_SERVICE_GRAPHQL,
         ]
 
+    def processes(self, *assets: "Asset") -> None:
+        for asset in assets:
+            self._assets_processed.add(asset)
+            if isinstance(self, DataStore):
+                self._assets_stored.add(asset)
 
-class ExternalEntity(TechnicalComponent):
+    def stores(self, *assets: "Asset", skip_process: bool = False) -> None:
+        for asset in assets:
+            self._assets_stored.add(asset)
+            if not skip_process:
+                self._assets_processed.add(asset)
+
+    def add_data_flow(
+        self,
+        name: str,
+        *,
+        destination: "Component",
+        protocol: "Protocol",
+        **kwargs: Any,
+    ) -> "DataFlow":
+        return DataFlow(
+            self,
+            name,
+            source=self,
+            destination=destination,
+            protocol=protocol,
+            **kwargs,
+        )
+
+
+
+class ExternalEntity(Component):
     """Task, entity, or data store outside of your direct control."""
 
     def __init__(self, scope: Construct, name: str, **kwargs: Any):
@@ -297,7 +233,7 @@ class ExternalEntity(TechnicalComponent):
         )
 
 
-class Process(TechnicalComponent):
+class Process(Component):
     """Task that receives, modifies, or redirects input to output."""
 
     def __init__(self, scope: Construct, name: str, **kwargs: Any):
@@ -315,7 +251,7 @@ class Process(TechnicalComponent):
         )
 
 
-class DataStore(TechnicalComponent):
+class DataStore(Component):
     """Permanent and temporary data storage."""
 
     def __init__(self, scope: Construct, name: str, **kwargs: Any):

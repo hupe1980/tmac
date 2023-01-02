@@ -1,5 +1,5 @@
 from abc import ABC, abstractproperty
-from typing import TYPE_CHECKING, Generic, List, Optional, Set, TypeVar
+from typing import TYPE_CHECKING, List, Optional, Set, cast
 
 from jinja2 import Template
 
@@ -7,16 +7,13 @@ from .threat import ComponentThreat, ModelThreat
 from .user_story import ComponentUserStory, ModelUserStory, UserStory
 
 if TYPE_CHECKING:
-    from .component import TechnicalComponent
+    from .component import Component
     from .data_flow import DataFlow
     from .model import Model
     from .threat import BaseThreat, Category
 
 
-T = TypeVar("T")
-
-
-class Risk(ABC, Generic[T]):
+class Risk(ABC):
     def __init__(self, threat: "BaseThreat", model: "Model") -> None:
         self._threat = threat
         self._model = model
@@ -30,7 +27,7 @@ class Risk(ABC, Generic[T]):
         pass
 
     @abstractproperty
-    def user_stories(self) -> List[T]:
+    def user_stories(self) -> List["UserStory[Risk]"]:
         pass
 
     @property
@@ -58,18 +55,18 @@ class Risk(ABC, Generic[T]):
                 for cwe_id in self._threat.cwe_ids
             ],
         ]
-    
+
     @property
     def model(self) -> "Model":
         return self._model
 
 
-class ComponentRisk(Risk["ComponentUserStory"]):
+class ComponentRisk(Risk):
     def __init__(
         self,
         threat: "BaseThreat",
         *,
-        component: "TechnicalComponent",
+        component: "Component",
         data_flow: Optional["DataFlow"] = None,
         model: "Model",
     ) -> None:
@@ -91,7 +88,7 @@ class ComponentRisk(Risk["ComponentUserStory"]):
         )
 
     @property
-    def component(self) -> "TechnicalComponent":
+    def component(self) -> "Component":
         return self._component
 
     @property
@@ -99,19 +96,19 @@ class ComponentRisk(Risk["ComponentUserStory"]):
         return self._data_flow
 
     @property
-    def user_stories(self) -> List["ComponentUserStory"]:
+    def user_stories(self) -> List["UserStory[Risk]"]:
         stories: Set["ComponentUserStory"] = set()
         if isinstance(self._threat, ComponentThreat):
             for tpl in self._threat.get_user_story_templates(
                 self._model.user_story_template_repository, self._component
             ):
                 stories.add(ComponentUserStory(tpl, self))
-            return list(stories)
+            return cast(List["UserStory[Risk]"], list(stories))
 
         return NotImplemented
 
 
-class ModelRisk(Risk["ModelUserStory"]):
+class ModelRisk(Risk):
     def __init__(
         self,
         threat: "BaseThreat",
@@ -128,7 +125,7 @@ class ModelRisk(Risk["ModelUserStory"]):
         return Template(self._threat.risk_text).render(model=self._model)
 
     @property
-    def user_stories(self) -> List["ModelUserStory"]:
+    def user_stories(self) -> List["UserStory[Risk]"]:
         stories: Set["ModelUserStory"] = set()
 
         if isinstance(self._threat, ModelThreat):
@@ -136,6 +133,6 @@ class ModelRisk(Risk["ModelUserStory"]):
                 self._model.user_story_template_repository
             ):
                 stories.add(ModelUserStory(tpl, self))
-            return list(stories)
+            return cast(List["UserStory[Risk]"], list(stories))
 
         return NotImplemented

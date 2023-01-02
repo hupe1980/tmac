@@ -6,7 +6,6 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.abspath(""), "..")))
 
 from tmac import (
-    Machine,
     Model,
     Process,
     Protocol,
@@ -15,20 +14,19 @@ from tmac import (
     Technology,
     TrustBoundary,
 )  # noqa: E402
-from tmac.plus import Database, User  # noqa: E402
+from tmac.plus import Browser, Database  # noqa: E402
 
-model = Model("REST API Model", description="Sample description")
+model = Model("Demo Model", description="Sample description")
 
 internet = TrustBoundary(model, "Internet")
 dmz = TrustBoundary(model, "DMZ")
 intranet = TrustBoundary(model, "Intranet")
 
-user = User(model, "User", trust_boundary=internet)
+browser = Browser(model, "Browser", trust_boundary=internet)
 
 web_server = Process(
     model,
     "WebServer",
-    machine=Machine.VIRTUAL,
     technology=Technology.WEB_APPLICATION,
     trust_boundary=dmz,
 )
@@ -36,11 +34,10 @@ web_server = Process(
 database = Database(
     model,
     "Database",
-    machine=Machine.VIRTUAL,
     trust_boundary=intranet,
 )
 
-web_traffic = user.add_data_flow(
+web_traffic = browser.add_data_flow(
     "WebTraffic",
     destination=web_server,
     protocol=Protocol.HTTPS,

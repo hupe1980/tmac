@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tmac"
-version = "0.0.7"
+version = "0.0.8"
 description = "Agile Threat Modeling as Code"
 authors = ["hupe1980"]
 repository = "https://github.com/hupe1980/tmac"

@@ -1,6 +1,5 @@
 from .asset import Asset
 from .component import (
-    Actor,
     Component,
     DataFormat,
     DataStore,
@@ -8,7 +7,6 @@ from .component import (
     ExternalEntity,
     Machine,
     Process,
-    TechnicalComponent,
     Technology,
 )
 from .data_flow import Authentication, Authorization, DataFlow, Protocol
@@ -35,7 +33,6 @@ from .user_story import ASVSCategory, UserStory, UserStoryTemplate, UserStoryTem
 
 __all__ = (
     "Asset",
-    "Actor",
     "Component",
     "DataFormat",
     "DataStore",
@@ -43,7 +40,6 @@ __all__ = (
     "ExternalEntity",
     "Machine",
     "Process",
-    "TechnicalComponent",
     "Technology",
     "Authentication",
     "Authorization",

@@ -1,7 +1,7 @@
 import os
 from typing import TYPE_CHECKING, List
 
-from ..component import DataFormat, TechnicalComponent, Technology
+from ..component import DataFormat, Component, Technology
 from ..risk import ComponentRisk
 from ..threat import CAPEC, ComponentThreat, ThreatLibrary
 from ..user_story import ASVSCategory, UserStoryTemplate, UserStoryTemplateRepository
@@ -24,7 +24,7 @@ class CAPEC_62(ComponentThreat):
         )
 
     def apply(
-        self, component: "TechnicalComponent", model: "Model"
+        self, component: "Component", model: "Model"
     ) -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
 
@@ -58,7 +58,7 @@ class CAPEC_63(ComponentThreat):
         )
 
     def apply(
-        self, component: "TechnicalComponent", model: "Model"
+        self, component: "Component", model: "Model"
     ) -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
 
@@ -68,7 +68,7 @@ class CAPEC_63(ComponentThreat):
         return risks
 
     def get_user_story_templates(
-        self, repository: "UserStoryTemplateRepository", component: "TechnicalComponent"
+        self, repository: "UserStoryTemplateRepository", component: "Component"
     ) -> List["UserStoryTemplate"]:
         tpls = repository.get_by_cwe(*self.cwe_ids)
         
@@ -107,7 +107,7 @@ class CAPEC_66(ComponentThreat):
         )
 
     def apply(
-        self, component: "TechnicalComponent", model: "Model"
+        self, component: "Component", model: "Model"
     ) -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
 
@@ -139,14 +139,12 @@ class CAPEC_126(ComponentThreat):
         )
 
     def apply(
-        self, component: "TechnicalComponent", model: "Model"
+        self, component: "Component", model: "Model"
     ) -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
 
         for flow in component.outgoing_flows:
-            if isinstance(
-                flow.destination, TechnicalComponent
-            ) and flow.destination.technology in [
+            if flow.destination.technology in [
                 Technology.FILE_SERVER,
                 Technology.LOCAL_FILE_SYSTEM,
             ]:
@@ -175,7 +173,7 @@ class CAPEC_664(ComponentThreat):
         )
 
     def apply(
-        self, component: "TechnicalComponent", model: "Model"
+        self, component: "Component", model: "Model"
     ) -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
 
@@ -212,7 +210,7 @@ class CAPEC_676(ComponentThreat):
         )
 
     def apply(
-        self, component: "TechnicalComponent", model: "Model"
+        self, component: "Component", model: "Model"
     ) -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
 
