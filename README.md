@@ -1,8 +1,6 @@
 # tmac
 > Agile Threat Modeling as Code
 - Close to the code - close to developers
-- Optimized for jupyter notebooks
-- Generates data-flow diagrams
 
 ## Install
 ```bash
@@ -78,22 +76,22 @@ database_traffic.transfers(
 print(model.risks_table(table_format=TableFormat.GITHUB))
 ```
 Output:
-| ID                                 | Category                | Risk                                                                          |
-|------------------------------------|-------------------------|-------------------------------------------------------------------------------|
-| CAPEC-62@WebServer@WebTraffic      | Subvert Access Control  | Cross-Site Request Forgery (CSRF) risk at WebServer via WebTraffic from User  |
-| CAPEC-63@WebServer                 | Inject Unexpected Items | Cross-Site Scripting (XSS) risk at WebServer                                  |
-| CAPEC-66@WebServer@DatabaseTraffic | Inject Unexpected Items | SQL Injection risk at WebServer against database Database via DatabaseTraffic |
-|...|...|...|
+| ID                                 | Category                | Risk                                                                            | Treatment   |
+|------------------------------------|-------------------------|---------------------------------------------------------------------------------|-------------|
+| CAPEC-62@WebServer@WebTraffic      | Subvert Access Control  | Cross-Site Request Forgery (CSRF) risk at WebServer via WebTraffic from Browser | in-progress |
+| CAPEC-63@WebServer                 | Inject Unexpected Items | Cross-Site Scripting (XSS) risk at WebServer                                    | accepted    |
+| CAPEC-66@WebServer@DatabaseTraffic | Inject Unexpected Items | SQL Injection risk at WebServer against database Database via DatabaseTraffic   | mitigated   |
+|...|...|...|...|
 ```python
 print(model.create_backlog_table(table_format=TableFormat.GITHUB))
 ```
 Output:
-| ID                            | User Story                                                                                                                                                                                                                              |
-|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ASVS-5.1.3@CAPEC-63@WebServer | As a Security Champion I want all of the input which can affect control or data flow to be validated so that I can protect my application from malicious manipulation which could lead to unauthorised disclosure or loss of integrity. |
-| ASVS-5.3.3@CAPEC-63@WebServer | As a Security Champion I want all of the output to be escaped so that I can protect my application against reflected, stored, and DOM based XSS.                                                                                        |
-| ASVS-5.3.4@CAPEC-66@WebServer | As a Security Champion I want all data selection or database queries use parameterized queries so that my application is protected against database injection attacks.                                                                  |
-|...|...|
+| ID                                            | Category                                     | User Story                                                                                                                                                                                                                                                         | State       |
+|-----------------------------------------------|----------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
+| ASVS-13.2.3@CAPEC-62@WebServer@WebTraffic     | RESTful Web Service                          | Verify that RESTful web services that utilize cookies are protected from Cross-Site Request Forgery via the use of at least one or more of the following: double submit cookie pattern, CSRF nonces, or Origin request header checks.                              | draft       |
+| ASVS-5.3.5@CAPEC-66@WebServer@DatabaseTraffic | Output Encoding and Injection Prevention     | Verify that where parameterized or safer mechanisms are not present, context-specific output encoding is used to protect against injection attacks, such as the use of SQL escaping to protect against SQL injection.                                              | closed      |
+| ASVS-1.2.3@CAPEC-62@WebServer@WebTraffic      | Authentication Architecture                  | Verify that the application uses a single vetted authentication mechanism that is known to be secure, can be extended to include strong authentication, and has sufficient logging and monitoring to detect account abuse or breaches.                             | in-progress |
+|...|...|...|...|
 ## Jupyter Threatbooks
 > Threat modeling with jupyter notebooks
 

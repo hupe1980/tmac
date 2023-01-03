@@ -15,17 +15,17 @@
 ## User Stories
 |ID|Category|User Story|State|
 |---|---|---|---|
-|[ASVS-5.3.4@CAPEC-66@WebServer@DatabaseTraffic](#asvs-534capec-66webserverdatabasetraffic)|Output Encoding and Injection Prevention|Verify that data selection or database queries (e.g. SQL, HQL, ORM, NoSQL) use parameterized queries, ORMs, entity frameworks, or are otherwise protected from database injection attacks.|closed|
-|[ASVS-3.7.1@CAPEC-62@WebServer@WebTraffic](#asvs-371capec-62webserverwebtraffic)|Defenses Against Session Management Exploits|Verify the application ensures a full, valid login session or requires re-authentication or secondary verification before allowing any sensitive transactions or account modifications.|draft|
+|[ASVS-4.2.2@CAPEC-62@WebServer@WebTraffic](#asvs-422capec-62webserverwebtraffic)|Operation Level Access Control|Verify that the application or framework enforces a strong anti-CSRF mechanism to protect authenticated functionality, and effective anti-automation or anti-CSRF protects unauthenticated functionality.|draft|
 |[ASVS-1.2.3@CAPEC-62@WebServer@WebTraffic](#asvs-123capec-62webserverwebtraffic)|Authentication Architecture|Verify that the application uses a single vetted authentication mechanism that is known to be secure, can be extended to include strong authentication, and has sufficient logging and monitoring to detect account abuse or breaches.|in-progress|
-|[ASVS-3.4.3@CAPEC-62@WebServer@WebTraffic](#asvs-343capec-62webserverwebtraffic)|Cookie-based Session Management|Verify that cookie-based session tokens utilize the 'SameSite' attribute to limit exposure to cross-site request forgery attacks.|draft|
+|[ASVS-5.3.4@CAPEC-66@WebServer@DatabaseTraffic](#asvs-534capec-66webserverdatabasetraffic)|Output Encoding and Injection Prevention|Verify that data selection or database queries (e.g. SQL, HQL, ORM, NoSQL) use parameterized queries, ORMs, entity frameworks, or are otherwise protected from database injection attacks.|closed|
+|[ASVS-14.5.4@CAPEC-62@WebServer@WebTraffic](#asvs-1454capec-62webserverwebtraffic)|HTTP Request Header Validation|Verify that HTTP headers added by a trusted proxy or SSO devices, such as a bearer token, are authenticated by the application.|draft|
 |[ASVS-1.2.4@CAPEC-62@WebServer@WebTraffic](#asvs-124capec-62webserverwebtraffic)|Authentication Architecture|Verify that all authentication pathways and identity management APIs implement consistent authentication security control strength, such that there are no weaker alternatives per the risk of the application.|draft|
+|[ASVS-3.7.1@CAPEC-62@WebServer@WebTraffic](#asvs-371capec-62webserverwebtraffic)|Defenses Against Session Management Exploits|Verify the application ensures a full, valid login session or requires re-authentication or secondary verification before allowing any sensitive transactions or account modifications.|draft|
 |[ASVS-4.3.3@CAPEC-62@WebServer@WebTraffic](#asvs-433capec-62webserverwebtraffic)|Other Access Control Considerations|Verify the application has additional authorization (such as step up or adaptive authentication) for lower value systems, and / or segregation of duties for high value applications to enforce anti-fraud controls as per the risk of application and past fraud.|draft|
-|[ASVS-5.3.5@CAPEC-66@WebServer@DatabaseTraffic](#asvs-535capec-66webserverdatabasetraffic)|Output Encoding and Injection Prevention|Verify that where parameterized or safer mechanisms are not present, context-specific output encoding is used to protect against injection attacks, such as the use of SQL escaping to protect against SQL injection.|closed|
+|[ASVS-3.4.3@CAPEC-62@WebServer@WebTraffic](#asvs-343capec-62webserverwebtraffic)|Cookie-based Session Management|Verify that cookie-based session tokens utilize the 'SameSite' attribute to limit exposure to cross-site request forgery attacks.|draft|
 |[ASVS-13.2.3@CAPEC-62@WebServer@WebTraffic](#asvs-1323capec-62webserverwebtraffic)|RESTful Web Service|Verify that RESTful web services that utilize cookies are protected from Cross-Site Request Forgery via the use of at least one or more of the following: double submit cookie pattern, CSRF nonces, or Origin request header checks.|draft|
 |[ASVS-1.2.2@CAPEC-62@WebServer@WebTraffic](#asvs-122capec-62webserverwebtraffic)|Authentication Architecture|Verify that communications between application components, including APIs, middleware and data layers, are authenticated. Components should have the least necessary privileges needed.|draft|
-|[ASVS-4.2.2@CAPEC-62@WebServer@WebTraffic](#asvs-422capec-62webserverwebtraffic)|Operation Level Access Control|Verify that the application or framework enforces a strong anti-CSRF mechanism to protect authenticated functionality, and effective anti-automation or anti-CSRF protects unauthenticated functionality.|draft|
-|[ASVS-14.5.4@CAPEC-62@WebServer@WebTraffic](#asvs-1454capec-62webserverwebtraffic)|HTTP Request Header Validation|Verify that HTTP headers added by a trusted proxy or SSO devices, such as a bearer token, are authenticated by the application.|draft|
+|[ASVS-5.3.5@CAPEC-66@WebServer@DatabaseTraffic](#asvs-535capec-66webserverdatabasetraffic)|Output Encoding and Injection Prevention|Verify that where parameterized or safer mechanisms are not present, context-specific output encoding is used to protect against injection attacks, such as the use of SQL escaping to protect against SQL injection.|closed|
 
 
 ## Risk Details
@@ -39,12 +39,12 @@
 
 **Mitigations**:
 - Add CSRF protection for cookie based REST services: [ASVS-13.2.3@CAPEC-62@WebServer@WebTraffic](#asvs-1323capec-62webserverwebtraffic)
-- Set "samesite" attribute for cookie-based session tokens: [ASVS-3.4.3@CAPEC-62@WebServer@WebTraffic](#asvs-343capec-62webserverwebtraffic)
+- Enforce additional authorization and segregation of duties: [ASVS-4.3.3@CAPEC-62@WebServer@WebTraffic](#asvs-433capec-62webserverwebtraffic)
+- Consistently apply authentication strength: [ASVS-1.2.4@CAPEC-62@WebServer@WebTraffic](#asvs-124capec-62webserverwebtraffic)
 - Authenticate HTTP headers added by a trusted proxy or SSO device: [ASVS-14.5.4@CAPEC-62@WebServer@WebTraffic](#asvs-1454capec-62webserverwebtraffic)
 - Mutually authenticate application components. Minimize privileges: [ASVS-1.2.2@CAPEC-62@WebServer@WebTraffic](#asvs-122capec-62webserverwebtraffic)
-- Consistently apply authentication strength: [ASVS-1.2.4@CAPEC-62@WebServer@WebTraffic](#asvs-124capec-62webserverwebtraffic)
+- Set "samesite" attribute for cookie-based session tokens: [ASVS-3.4.3@CAPEC-62@WebServer@WebTraffic](#asvs-343capec-62webserverwebtraffic)
 - Use CSRF protection against authenticated functionality, add anti-automation controls for unauthenticated functionality: [ASVS-4.2.2@CAPEC-62@WebServer@WebTraffic](#asvs-422capec-62webserverwebtraffic)
-- Enforce additional authorization and segregation of duties: [ASVS-4.3.3@CAPEC-62@WebServer@WebTraffic](#asvs-433capec-62webserverwebtraffic)
 - Re-authenticate before sensitive transactions: [ASVS-3.7.1@CAPEC-62@WebServer@WebTraffic](#asvs-371capec-62webserverwebtraffic)
 - Use centralized authentication mechanism: [ASVS-1.2.3@CAPEC-62@WebServer@WebTraffic](#asvs-123capec-62webserverwebtraffic)
 
@@ -85,8 +85,8 @@
 ⚠ SQL Injection risk at WebServer against database Database via DatabaseTraffic [mitigated]
 
 **Mitigations**:
-- Lock/precompile queries (parameterization) to avoid injection attacks: [ASVS-5.3.4@CAPEC-66@WebServer@DatabaseTraffic](#asvs-534capec-66webserverdatabasetraffic)
 - Encode output context-specifically: [ASVS-5.3.5@CAPEC-66@WebServer@DatabaseTraffic](#asvs-535capec-66webserverdatabasetraffic)
+- Lock/precompile queries (parameterization) to avoid injection attacks: [ASVS-5.3.4@CAPEC-66@WebServer@DatabaseTraffic](#asvs-534capec-66webserverdatabasetraffic)
 
 **References**:
 - https://capec.mitre.org/data/definitions/66.html
@@ -97,19 +97,6 @@
 
 
 ## User Story Details
-### ASVS-1.2.3@CAPEC-62@WebServer@WebTraffic 
-> Verify that the application uses a single vetted authentication mechanism that is known to be secure, can be extended to include strong authentication, and has sufficient logging and monitoring to detect account abuse or breaches. 
-
-**Feature Name**: Use centralized authentication mechanism
-
-**User Story**:\
-Verify that the application uses a single vetted authentication mechanism that is known to be secure, can be extended to include strong authentication, and has sufficient logging and monitoring to detect account abuse or breaches. [in-progress]
-
-
-**References**:
-- https://cwe.mitre.org/data/definitions/306.html
-
----
 ### ASVS-3.7.1@CAPEC-62@WebServer@WebTraffic 
 > Verify the application ensures a full, valid login session or requires re-authentication or secondary verification before allowing any sensitive transactions or account modifications. 
 
@@ -126,31 +113,35 @@ Verify the application ensures a full, valid login session or requires re-authen
 - https://cwe.mitre.org/data/definitions/306.html
 
 ---
-### ASVS-14.5.4@CAPEC-62@WebServer@WebTraffic 
-> Verify that HTTP headers added by a trusted proxy or SSO devices, such as a bearer token, are authenticated by the application. 
+### ASVS-1.2.2@CAPEC-62@WebServer@WebTraffic 
+> Verify that communications between application components, including APIs, middleware and data layers, are authenticated. Components should have the least necessary privileges needed. 
 
-**Feature Name**: Authenticate HTTP headers added by a trusted proxy or SSO device
+**Feature Name**: Mutually authenticate application components. Minimize privileges
 
 **User Story**:\
-Verify that HTTP headers added by a trusted proxy or SSO devices, such as a bearer token, are authenticated by the application. [draft]
+Verify that communications between application components, including APIs, middleware and data layers, are authenticated. Components should have the least necessary privileges needed. [draft]
 
 
 **References**:
+- https://owasp-top-10-proactive-controls-2018.readthedocs.io/en/latest/c3-secure-database-access.html
 - https://cwe.mitre.org/data/definitions/306.html
 
 ---
-### ASVS-4.3.3@CAPEC-62@WebServer@WebTraffic 
-> Verify the application has additional authorization (such as step up or adaptive authentication) for lower value systems, and / or segregation of duties for high value applications to enforce anti-fraud controls as per the risk of application and past fraud. 
+### ASVS-4.2.2@CAPEC-62@WebServer@WebTraffic 
+> Verify that the application or framework enforces a strong anti-CSRF mechanism to protect authenticated functionality, and effective anti-automation or anti-CSRF protects unauthenticated functionality. 
 
-**Feature Name**: Enforce additional authorization and segregation of duties
+**Feature Name**: Use CSRF protection against authenticated functionality, add anti-automation controls for unauthenticated functionality
 
 **User Story**:\
-Verify the application has additional authorization (such as step up or adaptive authentication) for lower value systems, and / or segregation of duties for high value applications to enforce anti-fraud controls as per the risk of application and past fraud. [draft]
+Verify that the application or framework enforces a strong anti-CSRF mechanism to protect authenticated functionality, and effective anti-automation or anti-CSRF protects unauthenticated functionality. [draft]
 
 
 **References**:
-- https://cheatsheetseries.owasp.org/cheatsheets/REST_Assessment_Cheat_Sheet.html
-- https://cwe.mitre.org/data/definitions/732.html
+- https://owasp.org/www-project-web-security-testing-guide/v41/4-Web_Application_Security_Testing/06-Session_Management_Testing/05-Testing_for_Cross_Site_Request_Forgery.html
+- https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html
+- https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html
+- https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Testing_Automation_Cheat_Sheet.html
+- https://cwe.mitre.org/data/definitions/352.html
 
 ---
 ### ASVS-1.2.4@CAPEC-62@WebServer@WebTraffic 
@@ -182,17 +173,16 @@ Verify that data selection or database queries (e.g. SQL, HQL, ORM, NoSQL) use p
 - https://cwe.mitre.org/data/definitions/89.html
 
 ---
-### ASVS-1.2.2@CAPEC-62@WebServer@WebTraffic 
-> Verify that communications between application components, including APIs, middleware and data layers, are authenticated. Components should have the least necessary privileges needed. 
+### ASVS-14.5.4@CAPEC-62@WebServer@WebTraffic 
+> Verify that HTTP headers added by a trusted proxy or SSO devices, such as a bearer token, are authenticated by the application. 
 
-**Feature Name**: Mutually authenticate application components. Minimize privileges
+**Feature Name**: Authenticate HTTP headers added by a trusted proxy or SSO device
 
 **User Story**:\
-Verify that communications between application components, including APIs, middleware and data layers, are authenticated. Components should have the least necessary privileges needed. [draft]
+Verify that HTTP headers added by a trusted proxy or SSO devices, such as a bearer token, are authenticated by the application. [draft]
 
 
 **References**:
-- https://owasp-top-10-proactive-controls-2018.readthedocs.io/en/latest/c3-secure-database-access.html
 - https://cwe.mitre.org/data/definitions/306.html
 
 ---
@@ -213,21 +203,34 @@ Verify that cookie-based session tokens utilize the 'SameSite' attribute to limi
 - https://cwe.mitre.org/data/definitions/1275.html
 
 ---
-### ASVS-4.2.2@CAPEC-62@WebServer@WebTraffic 
-> Verify that the application or framework enforces a strong anti-CSRF mechanism to protect authenticated functionality, and effective anti-automation or anti-CSRF protects unauthenticated functionality. 
+### ASVS-13.2.3@CAPEC-62@WebServer@WebTraffic 
+> Verify that RESTful web services that utilize cookies are protected from Cross-Site Request Forgery via the use of at least one or more of the following: double submit cookie pattern, CSRF nonces, or Origin request header checks. 
 
-**Feature Name**: Use CSRF protection against authenticated functionality, add anti-automation controls for unauthenticated functionality
+**Feature Name**: Add CSRF protection for cookie based REST services
 
 **User Story**:\
-Verify that the application or framework enforces a strong anti-CSRF mechanism to protect authenticated functionality, and effective anti-automation or anti-CSRF protects unauthenticated functionality. [draft]
+Verify that RESTful web services that utilize cookies are protected from Cross-Site Request Forgery via the use of at least one or more of the following: double submit cookie pattern, CSRF nonces, or Origin request header checks. [draft]
 
 
 **References**:
 - https://owasp.org/www-project-web-security-testing-guide/v41/4-Web_Application_Security_Testing/06-Session_Management_Testing/05-Testing_for_Cross_Site_Request_Forgery.html
-- https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html
+- https://cheatsheetseries.owasp.org/cheatsheets/REST_Assessment_Cheat_Sheet.html
+- https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html
 - https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html
-- https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Testing_Automation_Cheat_Sheet.html
 - https://cwe.mitre.org/data/definitions/352.html
+
+---
+### ASVS-1.2.3@CAPEC-62@WebServer@WebTraffic 
+> Verify that the application uses a single vetted authentication mechanism that is known to be secure, can be extended to include strong authentication, and has sufficient logging and monitoring to detect account abuse or breaches. 
+
+**Feature Name**: Use centralized authentication mechanism
+
+**User Story**:\
+Verify that the application uses a single vetted authentication mechanism that is known to be secure, can be extended to include strong authentication, and has sufficient logging and monitoring to detect account abuse or breaches. [in-progress]
+
+
+**References**:
+- https://cwe.mitre.org/data/definitions/306.html
 
 ---
 ### ASVS-5.3.5@CAPEC-66@WebServer@DatabaseTraffic 
@@ -244,20 +247,17 @@ Verify that where parameterized or safer mechanisms are not present, context-spe
 - https://cwe.mitre.org/data/definitions/89.html
 
 ---
-### ASVS-13.2.3@CAPEC-62@WebServer@WebTraffic 
-> Verify that RESTful web services that utilize cookies are protected from Cross-Site Request Forgery via the use of at least one or more of the following: double submit cookie pattern, CSRF nonces, or Origin request header checks. 
+### ASVS-4.3.3@CAPEC-62@WebServer@WebTraffic 
+> Verify the application has additional authorization (such as step up or adaptive authentication) for lower value systems, and / or segregation of duties for high value applications to enforce anti-fraud controls as per the risk of application and past fraud. 
 
-**Feature Name**: Add CSRF protection for cookie based REST services
+**Feature Name**: Enforce additional authorization and segregation of duties
 
 **User Story**:\
-Verify that RESTful web services that utilize cookies are protected from Cross-Site Request Forgery via the use of at least one or more of the following: double submit cookie pattern, CSRF nonces, or Origin request header checks. [draft]
+Verify the application has additional authorization (such as step up or adaptive authentication) for lower value systems, and / or segregation of duties for high value applications to enforce anti-fraud controls as per the risk of application and past fraud. [draft]
 
 
 **References**:
-- https://owasp.org/www-project-web-security-testing-guide/v41/4-Web_Application_Security_Testing/06-Session_Management_Testing/05-Testing_for_Cross_Site_Request_Forgery.html
 - https://cheatsheetseries.owasp.org/cheatsheets/REST_Assessment_Cheat_Sheet.html
-- https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html
-- https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html
-- https://cwe.mitre.org/data/definitions/352.html
+- https://cwe.mitre.org/data/definitions/732.html
 
 ---
