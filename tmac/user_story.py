@@ -86,16 +86,13 @@ class UserStory(Generic[T]):
         id: str,
         template: "UserStoryTemplate",
         risk: "T",
-        state: str = "draft",
-        ticket: str = "",
-        comment: str = "",
     ) -> None:
         self._id = id
         self._template = template
         self._risk = risk
-        self.state = state
-        self.ticket = ticket
-        self.comment = comment
+        self.state: str = "draft"
+        self.ticket: str = ""
+        self.comment: str = ""
 
     @abstractproperty
     def text(self) -> str:
@@ -137,7 +134,7 @@ class UserStory(Generic[T]):
             ],
         ]
 
-    def update_state(self, state: str, ticket: str = "", comment: str = "") -> None:
+    def update_state(self, state: str, *, ticket: str = "", comment: str = "") -> None:
         self.state = state
         self.ticket = ticket
         self.comment = comment

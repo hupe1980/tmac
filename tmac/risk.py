@@ -12,11 +12,21 @@ if TYPE_CHECKING:
     from .model import Model
     from .threat import BaseThreat, Category
 
+class RiskTreatment:
+    def __init__(self, state: str, *, ticket: str = "", comment: str = "") -> None:
+        self.state = state
+        self.ticket = ticket
+        self.comment = comment
 
 class Risk(ABC):
-    def __init__(self, threat: "BaseThreat", model: "Model") -> None:
+    def __init__(
+        self,
+        threat: "BaseThreat",
+        model: "Model",
+    ) -> None:
         self._threat = threat
         self._model = model
+        self._treatment = RiskTreatment("unchecked")
 
     @abstractproperty
     def id(self) -> str:
@@ -60,6 +70,22 @@ class Risk(ABC):
     def model(self) -> "Model":
         return self._model
 
+    @property
+    def treatment(self) -> "RiskTreatment":
+        if self._treatment.state != "unchecked":
+            return self._treatment
+        
+        if all(story.state in ["closed"] for story in self.user_stories):
+            return RiskTreatment("mitigated", comment="All user stories are closed")
+
+        if any(story.state != "draft" for story in self.user_stories):
+            return RiskTreatment("in-progress")
+
+        return self._treatment
+
+    def update_treatment(self, state: str, *, ticket: str = "", comment: str = "") -> None:
+        self._treatment = RiskTreatment(state, ticket=ticket, comment=comment)
+
 
 class ComponentRisk(Risk):
     def __init__(
@@ -97,6 +123,9 @@ class ComponentRisk(Risk):
 
     @property
     def user_stories(self) -> List["UserStory[Risk]"]:
+        if self._treatment.state in ["accepted", "transferred", "n/a", "mitigated"]:
+            return []
+
         stories: Set["ComponentUserStory"] = set()
         if isinstance(self._threat, ComponentThreat):
             for tpl in self._threat.get_user_story_templates(
@@ -104,11 +133,15 @@ class ComponentRisk(Risk):
             ):
                 id = f"{tpl.id}@{self.id}"
                 user_story = ComponentUserStory(id=id, template=tpl, risk=self)
-                
+
                 new_state = self._model.get_state_by_id(id)
                 if new_state is not None:
-                    user_story.update_state(state=new_state.state)
-                
+                    user_story.update_state(
+                        state=new_state.state,
+                        ticket=new_state.ticket,
+                        comment=new_state.comment,
+                    )
+
                 stories.add(user_story)
             return cast(List["UserStory[Risk]"], list(stories))
 
@@ -139,13 +172,18 @@ class ModelRisk(Risk):
             for tpl in self._threat.get_user_story_templates(
                 self._model.user_story_template_repository
             ):
-                stories.add(
-                    ModelUserStory(
-                        id=f"{tpl.id}@{self.id}",
-                        template=tpl, 
-                        risk=self,
+                id = f"{tpl.id}@{self.id}"
+                user_story = ModelUserStory(id=id, template=tpl, risk=self)
+
+                new_state = self._model.get_state_by_id(id)
+                if new_state is not None:
+                    user_story.update_state(
+                        state=new_state.state,
+                        ticket=new_state.ticket,
+                        comment=new_state.comment,
                     )
-                )
+
+                stories.add(user_story)
             return cast(List["UserStory[Risk]"], list(stories))
 
         return NotImplemented

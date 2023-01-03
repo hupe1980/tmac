@@ -63,9 +63,14 @@ database_traffic.transfers(
     availability=Score.HIGH,
 )
 
-model.update_user_story("ASVS-5.3.3@CAPEC-63@WebServer", "in progress")
+model.accept_risk("CAPEC-63@WebServer")
 
-print(model.create_risks_table(table_format=TableFormat.GITHUB) + "\n")
+model.process_user_story("ASVS-1.2.3@CAPEC-62@WebServer@WebTraffic")
+
+model.close_user_story("ASVS-5.3.4@CAPEC-66@WebServer@DatabaseTraffic")
+model.close_user_story("ASVS-5.3.5@CAPEC-66@WebServer@DatabaseTraffic")
+
+print(model.create_risks_table() + "\n")
 print(model.create_backlog_table() + "\n")
 
 model.create_data_flow_diagram(auto_view=False)

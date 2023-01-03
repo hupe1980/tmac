@@ -145,7 +145,28 @@ class Model(Construct, TagMixin):
                 return state
         return None
 
-    def update_user_story(
+    def accept_risk(self, id: str, *, ticket: str = "", comment: str = "") -> None:
+        self._update_state(id, "accepted", ticket=ticket, comment=comment)
+
+    def discard_risk(self, id: str, *, ticket: str = "", comment: str = "") -> None:
+        self._update_state(id, "n/a", ticket=ticket, comment=comment)
+
+    def transfer_risk(self, id: str, *, ticket: str = "", comment: str = "") -> None:
+        self._update_state(id, "transferred", ticket=ticket, comment=comment)
+
+    def mitigate_risk(self, id: str, *, ticket: str = "", comment: str = "") -> None:
+        self._update_state(id, "mitigated", ticket=ticket, comment=comment)
+
+    def process_user_story(self, id: str, *, ticket: str = "", comment: str = "") -> None:
+        self._update_state(id, "in-progress", ticket=ticket, comment=comment)
+
+    def close_user_story(self, id: str, *, ticket: str = "", comment: str = "") -> None:
+        self._update_state(id, "closed", ticket=ticket, comment=comment)
+
+    def defer_user_story(self, id: str, *, ticket: str = "", comment: str = "") -> None:
+        self._update_state(id, "deffered", ticket=ticket, comment=comment)
+
+    def _update_state(
         self, id: str, state: str, *, ticket: str = "", comment: str = ""
     ) -> None:
         model_state = self.get_state_by_id(id)
@@ -174,12 +195,12 @@ class Model(Construct, TagMixin):
     def create_risks_table(
         self, table_format: TableFormat = TableFormat.SIMPLE_GRID
     ) -> str:
-        headers = ["ID", "Category", "Risk"]
+        headers = ["ID", "Category", "Risk", "Treatment"]
         table = []
         for risk in self.risks:
-            table.append([risk.id, risk.category, risk.text])
+            table.append([risk.id, risk.category, risk.text, risk.treatment.state])
 
-        maxcolwodths: Optional[Iterable[int | None]] = [20, 15, 80]
+        maxcolwodths: Optional[Iterable[int | None]] = [None, 15, 60, 10]
         if table_format == TableFormat.GITHUB:
             maxcolwodths = None
 
@@ -205,7 +226,7 @@ class Model(Construct, TagMixin):
                 ]
             )
 
-        maxcolwodths: Optional[Iterable[int | None]] = [20, 15, 80, None]
+        maxcolwodths: Optional[Iterable[int | None]] = [None, 15, 60, 10]
         if table_format == TableFormat.GITHUB:
             maxcolwodths = None
 

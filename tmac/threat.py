@@ -167,6 +167,16 @@ class ThreatLibrary(MutableMapping[str, "BaseThreat"]):
                 risks.extend(model_risks)
                 continue
 
+        # Update states
+        for risk in risks:
+            new_state = model.get_state_by_id(risk.id)
+            if new_state is not None:
+                risk.update_treatment(
+                    state=new_state.state,
+                    ticket=new_state.ticket,
+                    comment=new_state.comment,
+                )
+        
         return risks
 
     def __getitem__(self, id: str) -> "BaseThreat":
