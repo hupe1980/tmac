@@ -4,6 +4,9 @@ class TableFormat(Enum):
     SIMPLE = "simple"
     """simple is the default format. It corresponds to simple_tables in 
     Pandoc Markdown extensions"""
+
+    SIMPLE_GRID = "simple_grid"
+    """imple_grid draws a grid using single-line box-drawing characters"""
     
     GITHUB = "github"
     """github follows the conventions of GitHub flavored Markdown"""

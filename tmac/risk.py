@@ -66,9 +66,9 @@ class ComponentRisk(Risk):
         self,
         threat: "BaseThreat",
         *,
+        model: "Model",
         component: "Component",
         data_flow: Optional["DataFlow"] = None,
-        model: "Model",
     ) -> None:
         super().__init__(threat=threat, model=model)
 
@@ -102,7 +102,14 @@ class ComponentRisk(Risk):
             for tpl in self._threat.get_user_story_templates(
                 self._model.user_story_template_repository, self._component
             ):
-                stories.add(ComponentUserStory(tpl, self))
+                id = f"{tpl.id}@{self.id}"
+                user_story = ComponentUserStory(id=id, template=tpl, risk=self)
+                
+                new_state = self._model.get_state_by_id(id)
+                if new_state is not None:
+                    user_story.update_state(state=new_state.state)
+                
+                stories.add(user_story)
             return cast(List["UserStory[Risk]"], list(stories))
 
         return NotImplemented
@@ -132,7 +139,13 @@ class ModelRisk(Risk):
             for tpl in self._threat.get_user_story_templates(
                 self._model.user_story_template_repository
             ):
-                stories.add(ModelUserStory(tpl, self))
+                stories.add(
+                    ModelUserStory(
+                        id=f"{tpl.id}@{self.id}",
+                        template=tpl, 
+                        risk=self,
+                    )
+                )
             return cast(List["UserStory[Risk]"], list(stories))
 
         return NotImplemented

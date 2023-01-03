@@ -107,6 +107,13 @@ class Model(Construct, TagMixin):
         )
 
     @property
+    def states(self) -> List["ModelState"]:
+        return cast(
+            List["ModelState"],
+            list(filter(lambda c: isinstance(c, ModelState), self.node.find_all())),
+        )
+
+    @property
     def risks(self) -> List["Risk"]:
         if self.auto_evaluate:
             self.evaluate()
@@ -132,6 +139,23 @@ class Model(Construct, TagMixin):
             # mitigations=[m.otm for m in self.mitigations],
         )
 
+    def get_state_by_id(self, id: str) -> Optional["ModelState"]:
+        for state in self.states:
+            if state.id == id:
+                return state
+        return None
+
+    def update_user_story(
+        self, id: str, state: str, *, ticket: str = "", comment: str = ""
+    ) -> None:
+        model_state = self.get_state_by_id(id)
+        if model_state is not None:
+            model_state.state = state
+            model_state.ticket = ticket
+            model_state.comment = comment
+        else:
+            ModelState(self, id, state, ticket=ticket, comment=comment)
+
     def is_notebook(self) -> bool:
         try:
             shell = get_ipython().__class__.__name__  # type: ignore
@@ -147,23 +171,41 @@ class Model(Construct, TagMixin):
     def is_ci(self) -> bool:
         return os.environ.get("CI") is not None
 
-    def create_risks_table(self, table_format: TableFormat = TableFormat.SIMPLE) -> str:
+    def create_risks_table(
+        self, table_format: TableFormat = TableFormat.SIMPLE_GRID
+    ) -> str:
         headers = ["ID", "Category", "Risk"]
         table = []
         for risk in self.risks:
             table.append([risk.id, risk.category, risk.text])
 
-        return tabulate(table, headers=headers, tablefmt=str(table_format))
+        maxcolwodths: Optional[Iterable[int | None]] = [20, 15, 80]
+        if table_format == TableFormat.GITHUB:
+            maxcolwodths = None
+
+        return tabulate(
+            table,
+            headers=headers,
+            tablefmt=str(table_format),
+            maxcolwidths=maxcolwodths,
+        )
 
     def create_backlog_table(
-        self, table_format: TableFormat = TableFormat.SIMPLE
+        self, table_format: TableFormat = TableFormat.SIMPLE_GRID
     ) -> str:
-        headers = ["ID", "Category", "User Story"]
+        headers = ["ID", "Category", "User Story", "State"]
         table = []
         for user_story in self.user_stories:
-            table.append([user_story.id, user_story.sub_category, user_story.text])
+            table.append(
+                [
+                    user_story.id,
+                    user_story.sub_category,
+                    user_story.text,
+                    user_story.state,
+                ]
+            )
 
-        maxcolwodths: Optional[Iterable[int | None]] = [None, 20, 100]
+        maxcolwodths: Optional[Iterable[int | None]] = [20, 15, 80, None]
         if table_format == TableFormat.GITHUB:
             maxcolwodths = None
 
@@ -222,10 +264,32 @@ class Model(Construct, TagMixin):
                 raise ExceptionGroup("Validation errors", exceptions)
 
         self._risks = dict()
+
+        # ModelRisks
+        model_risks = self.threat_library.apply(self, component=None)
+        for risk in model_risks:
+            self._risks[risk.id] = risk
+
+        # ComponentRisks
         for c in self.components:
-            if not isinstance(c, Component):
-                continue
             for risk in c.risks:
                 self._risks[risk.id] = risk
 
         self.node.unlock()
+
+
+class ModelState(Construct):
+    def __init__(
+        self,
+        scope: "Construct",
+        id: str,
+        state: str,
+        *,
+        ticket: str = "",
+        comment: str = "",
+    ) -> None:
+        super().__init__(scope, id)
+
+        self.state = state
+        self.ticket = ticket
+        self.comment = comment

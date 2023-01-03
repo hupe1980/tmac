@@ -15,7 +15,6 @@ class Asset(Element):
         availability: Score,
         description: str = "",
         is_pii: bool = False,
-        out_of_scope: bool = False,
     ) -> None:
         super().__init__(scope, name, description=description)
 

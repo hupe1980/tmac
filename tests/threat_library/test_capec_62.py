@@ -18,6 +18,6 @@ def test_apply(model: "Model") -> None:
 
     e.add_data_flow("WebTrafffic", destination=p, protocol=Protocol.HTTPS)
       
-    risks = threat.apply(p, model)
+    risks = threat.apply(model=model, component=p)
     assert len(risks) == 1
     assert risks[0].text == "Cross-Site Request Forgery (CSRF) risk at WebApp via WebTrafffic from User"

@@ -7,6 +7,7 @@ from typing import (
     MutableMapping,
     Iterator,
     Optional,
+    Sequence,
     TYPE_CHECKING,
 )
 
@@ -131,7 +132,7 @@ class ThreatLibrary(MutableMapping[str, "BaseThreat"]):
     def __init__(self) -> None:
         self.excludes: List[str] = list()  # TODO
         self._lib: Dict[str, "BaseThreat"] = dict()
-        self.after_apply_hook: Optional[Callable[[List["Risk"]], None]] = None
+        self.after_apply_hook: Optional[Callable[[Sequence["Risk"]], None]] = None
 
     def add_threats(self, *threats: "BaseThreat") -> None:
         for threat in threats:
@@ -148,13 +149,23 @@ class ThreatLibrary(MutableMapping[str, "BaseThreat"]):
 
             if isinstance(item, ComponentThreat) and component is not None:
                 if item.is_applicable(component):
-                    risks.extend(item.apply(component, model))
+                    component_risks = item.apply(model, component)
+                    
+                    if self.after_apply_hook is not None:
+                        self.after_apply_hook(component_risks)    
+                    
+                    risks.extend(component_risks)
+                    continue
+                    
 
-            if isinstance(item, ModelThreat):
-                risks.extend(item.apply(model))
+            if isinstance(item, ModelThreat) and component is None:
+                model_risks = item.apply(model)
 
-        if self.after_apply_hook is not None:
-            self.after_apply_hook(risks)
+                if self.after_apply_hook is not None:
+                        self.after_apply_hook(model_risks)
+
+                risks.extend(model_risks)
+                continue
 
         return risks
 
@@ -250,7 +261,7 @@ class ComponentThreat(BaseThreat):
 
     @abstractmethod
     def apply(
-        self, component: "Component", model: "Model"
+        self,  model: "Model", component: "Component"
     ) -> List["ComponentRisk"]:
         pass
 

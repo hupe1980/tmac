@@ -2,6 +2,7 @@ import os
 from typing import TYPE_CHECKING, List
 
 from ..component import DataFormat, Component, Technology
+from ..data_flow import Protocol
 from ..risk import ComponentRisk
 from ..threat import CAPEC, ComponentThreat, ThreatLibrary
 from ..user_story import ASVSCategory, UserStoryTemplate, UserStoryTemplateRepository
@@ -9,6 +10,30 @@ from ..user_story import ASVSCategory, UserStoryTemplate, UserStoryTemplateRepos
 if TYPE_CHECKING:
     from ..model import Model
 
+
+
+class CAPEC_17(ComponentThreat):
+    def __init__(self) -> None:
+        super().__init__(
+            id="CAPEC-17",
+            name="Using Malicious Files",
+            category=CAPEC.SUBVERT_ACCESS_CONTROL,
+            description="An attack of this type exploits a system's configuration that allows an adversary to either directly access an executable file, for example through shell access; or in a possible worst case allows an adversary to upload a file and then execute it. Web servers, ftp servers, and message oriented middleware systems which have many integration points are particularly vulnerable, because both the programmers and the administrators must be in synch regarding the interfaces and the correct privileges for each interface.",
+            prerequisites=[
+                "System's configuration must allow an attacker to directly access executable files or upload files to execute. This means that any access control system that is supposed to mediate communications between the subject and the object is set incorrectly or assumes a benign environment.",
+            ],
+            risk_text="Using Malicious Files risk at {{ component.name }}.",
+            cwe_ids=[732, 285, 272, 59, 282, 270, 693],
+            references=["https://capec.mitre.org/data/definitions/17.html"],
+        )
+
+    def apply(self, model: "Model", component: "Component") -> List["ComponentRisk"]:
+        risks: List["ComponentRisk"] = list()
+
+        if DataFormat.FILE in component.accepts_data_formats:
+            risks.append(ComponentRisk(self, model=model, component=component))
+
+        return risks
 
 class CAPEC_62(ComponentThreat):
     def __init__(self) -> None:
@@ -20,12 +45,10 @@ class CAPEC_62(ComponentThreat):
             prerequisites=[],
             risk_text="Cross-Site Request Forgery (CSRF) risk at {{ component.name }} via {{ data_flow.name }} from {{ data_flow.source.name }}",
             cwe_ids=[352, 306, 664, 732, 1275],
-            references=["https://capec.mitre.org/data/definitions/63.html"],
+            references=["https://capec.mitre.org/data/definitions/62.html"],
         )
 
-    def apply(
-        self, component: "Component", model: "Model"
-    ) -> List["ComponentRisk"]:
+    def apply(self, model: "Model", component: "Component") -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
 
         if component.is_web_application is False:
@@ -57,13 +80,11 @@ class CAPEC_63(ComponentThreat):
             references=["https://capec.mitre.org/data/definitions/63.html"],
         )
 
-    def apply(
-        self, component: "Component", model: "Model"
-    ) -> List["ComponentRisk"]:
+    def apply(self, model: "Model", component: "Component") -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
 
         if component.is_web_application:
-            risks.append(ComponentRisk(self, component=component, model=model))
+            risks.append(ComponentRisk(self, model=model, component=component))
 
         return risks
 
@@ -71,20 +92,28 @@ class CAPEC_63(ComponentThreat):
         self, repository: "UserStoryTemplateRepository", component: "Component"
     ) -> List["UserStoryTemplate"]:
         tpls = repository.get_by_cwe(*self.cwe_ids)
-        
+
         result: List[UserStoryTemplate] = list()
         for tpl in tpls:
-            if 20 in tpl.cwe_ids and tpl.sub_category == ASVSCategory.RESTFUL_WEB_SERVICE and (
-                not DataFormat.JSON in component.accept_data_formats
-                or not component.technology == Technology.WEB_SERVICE_REST
+            if (
+                20 in tpl.cwe_ids
+                and tpl.sub_category == ASVSCategory.RESTFUL_WEB_SERVICE
+                and (
+                    not DataFormat.JSON in component.accepts_data_formats
+                    or not component.technology == Technology.WEB_SERVICE_REST
+                )
             ):
                 continue
-            elif 20 in tpl.cwe_ids and tpl.sub_category == ASVSCategory.SOAP_WEB_SERVICE and (
-                not DataFormat.XML in component.accept_data_formats
-                or not component.technology == Technology.WEB_SERVICE_SOAP
+            elif (
+                20 in tpl.cwe_ids
+                and tpl.sub_category == ASVSCategory.SOAP_WEB_SERVICE
+                and (
+                    not DataFormat.XML in component.accepts_data_formats
+                    or not component.technology == Technology.WEB_SERVICE_SOAP
+                )
             ):
-                 continue
-            
+                continue
+
             result.append(tpl)
 
         return result
@@ -106,9 +135,7 @@ class CAPEC_66(ComponentThreat):
             references=["https://capec.mitre.org/data/definitions/66.html"],
         )
 
-    def apply(
-        self, component: "Component", model: "Model"
-    ) -> List["ComponentRisk"]:
+    def apply(self, model: "Model", component: "Component") -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
 
         for flow in component.outgoing_flows:
@@ -138,9 +165,7 @@ class CAPEC_126(ComponentThreat):
             references=["https://capec.mitre.org/data/definitions/126.html"],
         )
 
-    def apply(
-        self, component: "Component", model: "Model"
-    ) -> List["ComponentRisk"]:
+    def apply(self, model: "Model", component: "Component") -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
 
         for flow in component.outgoing_flows:
@@ -153,6 +178,60 @@ class CAPEC_126(ComponentThreat):
                         self, component=component, data_flow=flow, model=model
                     )
                 )
+
+        return risks
+
+
+class CAPEC_136(ComponentThreat):
+    def __init__(self) -> None:
+        super().__init__(
+            id="CAPEC-136",
+            name="LDAP Injection",
+            category=CAPEC.INJECT_UNEXPECTED_ITEMS,
+            description="An attacker manipulates or crafts an LDAP query for the purpose of undermining the security of the target. Some applications use user input to create LDAP queries that are processed by an LDAP server. For example, a user might provide their username during authentication and the username might be inserted in an LDAP query during the authentication process. An attacker could use this input to inject additional commands into an LDAP query that could disclose sensitive information. For example, entering a * in the aforementioned query might return information about all users on the system. This attack is very similar to an SQL injection attack in that it manipulates a query to gather additional information or coerce a particular return value.",
+            prerequisites=[
+                "The target application must accept a string as user input, fail to sanitize characters that have a special meaning in LDAP queries in the user input, and insert the user-supplied string in an LDAP query which is then processed.",
+            ],
+            risk_text="LDAP Injection risk at {{ component.name }} against LDAP server {{ data_flow.destination.name }} via {{ data_flow.name }}.",
+            cwe_ids=[77, 90, 20],
+            references=["https://capec.mitre.org/data/definitions/136.html"],
+        )
+
+    def apply(self, model: "Model", component: "Component") -> List["ComponentRisk"]:
+        risks: List["ComponentRisk"] = list()
+
+        for flow in component.outgoing_flows:
+            if flow.protocol in [Protocol.LDAP, Protocol.LDAPS]:
+                risks.append(
+                    ComponentRisk(
+                        self, component=component, data_flow=flow, model=model
+                    )
+                )
+
+        return risks
+
+
+class CAPEC_250(ComponentThreat):
+    def __init__(self) -> None:
+        super().__init__(
+            id="CAPEC-250",
+            name="XML Injection",
+            category=CAPEC.INJECT_UNEXPECTED_ITEMS,
+            description="An attacker utilizes crafted XML user-controllable input to probe, attack, and inject data into the XML database, using techniques similar to SQL injection. The user-controllable input can allow for unauthorized viewing of data, bypassing authentication or the front-end application for direct XML database access, and possibly altering database information.",
+            prerequisites=[
+                "XML queries used to process user input and retrieve information stored in XML documents.",
+                "User-controllable input not properly sanitized",
+            ],
+            risk_text="XML Injection risk at {{ component.name }}.",
+            cwe_ids=[91, 74, 20, 707],
+            references=["https://capec.mitre.org/data/definitions/250.html"],
+        )
+
+    def apply(self, model: "Model", component: "Component") -> List["ComponentRisk"]:
+        risks: List["ComponentRisk"] = list()
+
+        if DataFormat.XML in component.accepts_data_formats:
+            risks.append(ComponentRisk(self, model=model, component=component))
 
         return risks
 
@@ -172,9 +251,7 @@ class CAPEC_664(ComponentThreat):
             references=["https://capec.mitre.org/data/definitions/664.html"],
         )
 
-    def apply(
-        self, component: "Component", model: "Model"
-    ) -> List["ComponentRisk"]:
+    def apply(self, model: "Model", component: "Component") -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
 
         if component.is_client or component.technology in [Technology.LOAD_BALANCER]:
@@ -209,9 +286,7 @@ class CAPEC_676(ComponentThreat):
             references=["https://capec.mitre.org/data/definitions/676.html"],
         )
 
-    def apply(
-        self, component: "Component", model: "Model"
-    ) -> List["ComponentRisk"]:
+    def apply(self, model: "Model", component: "Component") -> List["ComponentRisk"]:
         risks: List["ComponentRisk"] = list()
 
         for flow in component.outgoing_flows:
@@ -228,10 +303,13 @@ class CAPEC_676(ComponentThreat):
 DEFAULT_THREAT_LIBRARY = ThreatLibrary()
 
 DEFAULT_THREAT_LIBRARY.add_threats(
+    CAPEC_17(),
     CAPEC_62(),
     CAPEC_63(),
     CAPEC_66(),
     CAPEC_126(),
+    CAPEC_136(),
+    CAPEC_250(),
     CAPEC_664(),
     CAPEC_676(),
 )

@@ -63,6 +63,8 @@ database_traffic.transfers(
     availability=Score.HIGH,
 )
 
+model.update_user_story("ASVS-5.3.3@CAPEC-63@WebServer", "in progress")
+
 print(model.create_risks_table(table_format=TableFormat.GITHUB) + "\n")
 print(model.create_backlog_table() + "\n")
 

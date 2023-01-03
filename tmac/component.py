@@ -12,6 +12,7 @@ from .tag import TagMixin
 if TYPE_CHECKING:
     from .asset import Asset
     from .risk import Risk
+    from .user_story import UserStory
     from .trust_boundary import TrustBoundary
 
 
@@ -90,7 +91,7 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
         multi_tenant: bool = False,
         redundant: bool = False,
         custom_developed_parts: bool = False,
-        accept_data_formats: List[DataFormat] = [],
+        accepts_data_formats: List[DataFormat] = [],
         out_of_scope: bool = False,
         overwrite_node_attrs: Dict[str, str] = dict(),
     ):
@@ -105,7 +106,7 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
         self.multi_tenant = multi_tenant
         self.redundant = redundant
         self.custom_developed_parts = custom_developed_parts
-        self.accept_data_formats = set(accept_data_formats)
+        self.accepts_data_formats = set(accepts_data_formats)
         self.out_of_scope = out_of_scope
         self.trust_boundary = trust_boundary
 
@@ -154,6 +155,15 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
     @property
     def risks(self) -> List["Risk"]:
         return self._model.threat_library.apply(self._model, self)
+
+    @property
+    def user_stories(self) -> List["UserStory[Risk]"]:
+        stories: Set["UserStory[Risk]"] = set()
+        for risk in self.risks:
+            for story in risk.user_stories:
+                stories.add(story)
+
+        return list(stories)
 
     @property
     def max_average_asset_score(self) -> float:
@@ -212,7 +222,6 @@ class Component(Element, TagMixin, metaclass=ABCMeta):
             protocol=protocol,
             **kwargs,
         )
-
 
 
 class ExternalEntity(Component):

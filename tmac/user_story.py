@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Dict, Generic, List, TypeVar
 
 from jinja2 import Template
 
+
 if TYPE_CHECKING:
     from .risk import ComponentRisk, ModelRisk
 
@@ -82,19 +83,27 @@ T = TypeVar("T")
 class UserStory(Generic[T]):
     def __init__(
         self,
+        id: str,
         template: "UserStoryTemplate",
         risk: "T",
+        state: str = "draft",
+        ticket: str = "",
+        comment: str = "",
     ) -> None:
+        self._id = id
         self._template = template
         self._risk = risk
-
-    @abstractproperty
-    def id(self) -> str:
-        pass
+        self.state = state
+        self.ticket = ticket
+        self.comment = comment
 
     @abstractproperty
     def text(self) -> str:
         pass
+
+    @property
+    def id(self) -> str:
+        return self._id
 
     @property
     def description(self) -> str:
@@ -128,18 +137,20 @@ class UserStory(Generic[T]):
             ],
         ]
 
+    def update_state(self, state: str, ticket: str = "", comment: str = "") -> None:
+        self.state = state
+        self.ticket = ticket
+        self.comment = comment
+
 
 class ComponentUserStory(UserStory["ComponentRisk"]):
     def __init__(
         self,
+        id: str,
         template: "UserStoryTemplate",
         risk: "ComponentRisk",
     ) -> None:
-        super().__init__(template, risk)
-
-    @property
-    def id(self) -> str:
-        return f"{self._template.id}@{self._risk.id}"
+        super().__init__(id, template, risk)
 
     @property
     def text(self) -> str:
@@ -156,14 +167,11 @@ class ComponentUserStory(UserStory["ComponentRisk"]):
 class ModelUserStory(UserStory["ModelRisk"]):
     def __init__(
         self,
+        id: str,
         template: "UserStoryTemplate",
         risk: "ModelRisk",
     ) -> None:
-        super().__init__(template, risk)
-
-    @property
-    def id(self) -> str:
-        return f"{self._template.id}@{self._risk.id}"
+        super().__init__(id, template, risk)
 
     @property
     def text(self) -> str:

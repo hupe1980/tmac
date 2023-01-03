@@ -11,12 +11,11 @@ class Node:
     def __init__(
         self, host: "Construct", scope: Optional["Construct"] = None, id: str = ""
     ) -> None:
-        self.id = id
-        self.scope = scope
-
-        if self.scope != None and self.id == "":
+        if scope != None and id == "":
             raise ValueError("Only root constructs may have an empty id")
 
+        self._id = id
+        self._scope = scope
         self._host = host
         self._locked = False
         self._children: Dict[str, "Construct"] = dict()
@@ -24,7 +23,15 @@ class Node:
         self._context: Dict[str, Any] = dict()
 
         if scope is not None:
-            scope.node._add_child(host, self.id)
+            scope.node._add_child(host, id)
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @property
+    def scope(self) -> Optional["Construct"]:
+        return self._scope
 
     @property
     def children(self) -> List["Construct"]:
@@ -77,8 +84,16 @@ class Node:
 
 class Construct:
     def __init__(self, scope: Optional["Construct"], id: str) -> None:
-        self.id = id
-        self.node = Node(self, scope, self.id)
+        self._id = id
+        self._node = Node(self, scope, id)
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @property
+    def node(self) -> "Node":
+        return self._node
 
 
 def unique_id(name: str) -> str:
