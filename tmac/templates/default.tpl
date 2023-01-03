@@ -5,30 +5,30 @@
 ![](dfd.png)
 
 ## Potential Risks
-|ID|Category|Risk|
-|---|---|---|
+|ID|Category|Risk|Treatment|
+|---|---|---|---|
 {% for risk in model.risks -%}
-|[{{ risk.id }}](#{{ risk.id|lower|replace("@", "")|replace(".", "") }})|{{ risk.category }}|{{ risk.text }}|
+|[{{ risk.id }}](#{{ risk.id|lower|replace("@", "")|replace(".", "") }})|{{ risk.category }}|{{ risk.text }}|{{ risk.treatment.state }}|
 {% endfor %}
 
 ## User Stories
-|ID|Category|User Story|
-|---|---|---|
+|ID|Category|User Story|State|
+|---|---|---|---|
 {% for story in model.user_stories -%}
-|[{{ story.id }}](#{{ story.id|lower|replace("@", "")|replace(".", "") }})|{{ story.sub_category }}|{{ story.text }}|
+|[{{ story.id }}](#{{ story.id|lower|replace("@", "")|replace(".", "") }})|{{ story.sub_category }}|{{ story.text }}|{{ story.state }}|
 {% endfor %}
 
 ## Risk Details
 {% for risk in model.risks -%}
-### {{ risk.id }}
-{{ risk.description }}
+### {{ risk.id }} 
+> {{ risk.description }}
 
 **Prerequisites**:
 {% for prerequisite in risk.prerequisites -%}
 - {{ prerequisite }}
 {% endfor %}
 **Risk**:\
-⚠ {{ risk.text }}
+⚠ {{ risk.text }} [{{ risk.treatment.state }}]
 
 **Mitigations**:
 {% for story in risk.user_stories -%}
@@ -43,13 +43,13 @@
 
 ## User Story Details
 {% for story in model.user_stories -%}
-### {{ story.id }}
-{{ story.description }}
+### {{ story.id }} 
+> {{ story.description }} 
 
 **Feature Name**: {{ story.feature_name}}
 
 **User Story**:\
-{{ story.text }}
+{{ story.text }} [{{ story.state }}]
 
 {% if story.scenarios|length > 0 %}
 **Scenarios**:\
